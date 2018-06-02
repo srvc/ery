@@ -32,3 +32,7 @@
 [[constraint]]
   name = "github.com/miekg/dns"
   version = "1.0.7"
+
+[[constraint]]
+  name = "github.com/labstack/echo"
+  version = "3.3.5"
