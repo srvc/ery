@@ -1,6 +1,11 @@
 package main
 
-import "log"
+import (
+	"log"
+	"os"
+
+	"github.com/srvc/ery/pkg/ery/cmd"
+)
 
 func main() {
 	if err := run(); err != nil {
@@ -9,5 +14,11 @@ func main() {
 }
 
 func run() error {
-	return nil
+	command := cmd.NewEryCommand(
+		os.Stdin,
+		os.Stdout,
+		os.Stderr,
+	)
+
+	return command.Execute()
 }
