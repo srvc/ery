@@ -24,6 +24,7 @@ type server struct {
 	server *http.Server
 }
 
+// NewServer creates an API server instance.
 func NewServer(mapper domain.Mapper) app.Server {
 	return &server{
 		mapper: mapper,

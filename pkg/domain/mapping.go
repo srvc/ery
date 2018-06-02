@@ -1,12 +1,6 @@
 package domain
 
-import "net"
-
-type Addr struct {
-	IP   net.IP
-	Port uint32
-}
-
+// Mapping represents <hostname> - <local IP>:<port> map.
 type Mapping struct {
 	Addr
 	Hostnames []string
