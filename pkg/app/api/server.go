@@ -10,7 +10,8 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 
-	"github.com/srvc/ery/pkg/discovery"
+	"github.com/srvc/ery/pkg/app"
+	"github.com/srvc/ery/pkg/domain"
 )
 
 var (
@@ -19,11 +20,11 @@ var (
 )
 
 type server struct {
-	mapper discovery.Mapper
+	mapper domain.Mapper
 	server *http.Server
 }
 
-func NewServer(mapper discovery.Mapper) discovery.Server {
+func NewServer(mapper domain.Mapper) app.Server {
 	return &server{
 		mapper: mapper,
 	}

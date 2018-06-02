@@ -7,7 +7,8 @@ import (
 
 	godns "github.com/miekg/dns"
 
-	"github.com/srvc/ery/pkg/discovery"
+	"github.com/srvc/ery/pkg/app"
+	"github.com/srvc/ery/pkg/domain"
 )
 
 var (
@@ -16,7 +17,7 @@ var (
 )
 
 // NewServer creates a DNS server instance.
-func NewServer(mapper discovery.Mapper, localhost net.IP, addr string) discovery.Server {
+func NewServer(mapper domain.Mapper, localhost net.IP, addr string) app.Server {
 	return &server{
 		mapper:    mapper,
 		localhost: localhost,
@@ -25,7 +26,7 @@ func NewServer(mapper discovery.Mapper, localhost net.IP, addr string) discovery
 }
 
 type server struct {
-	mapper    discovery.Mapper
+	mapper    domain.Mapper
 	server    *godns.Server
 	localhost net.IP
 	addr      string

@@ -5,7 +5,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 
-	"github.com/srvc/ery/pkg/discovery"
+	"github.com/srvc/ery/pkg/app"
+	"github.com/srvc/ery/pkg/domain"
 )
 
 var (
@@ -14,7 +15,7 @@ var (
 )
 
 // NewServer creates a reverse proxy server instance.
-func NewServer(mapper discovery.Mapper, addr string) discovery.Server {
+func NewServer(mapper domain.Mapper, addr string) app.Server {
 	if addr != "" {
 		addr = defaultAddr
 	}
@@ -25,7 +26,7 @@ func NewServer(mapper discovery.Mapper, addr string) discovery.Server {
 }
 
 type server struct {
-	mapper discovery.Mapper
+	mapper domain.Mapper
 	server *http.Server
 	addr   string
 }
