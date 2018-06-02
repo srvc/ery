@@ -8,6 +8,18 @@
   version = "v3.2.0"
 
 [[projects]]
+  name = "github.com/google/go-cmp"
+  packages = [
+    "cmp",
+    "cmp/cmpopts",
+    "cmp/internal/diff",
+    "cmp/internal/function",
+    "cmp/internal/value"
+  ]
+  revision = "3af367b6b30c263d47e8895973edcca9a49cf029"
+  version = "v0.2.0"
+
+[[projects]]
   name = "github.com/labstack/echo"
   packages = [
     ".",
@@ -89,6 +101,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0f90f75b67c0605ed43ade5169b1debb6fdc4a6b84d17f7fd21f9caff1323276"
+  inputs-digest = "277b69092fbfce9671151a766f238e819d0259ccad1a52aad14683c76ce448a9"
   solver-name = "gps-cdcl"
   solver-version = 1
