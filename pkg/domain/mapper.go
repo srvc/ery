@@ -9,6 +9,7 @@ import (
 
 // Mapper manages <hostname> - <local IP>:<port> mappings.
 type Mapper interface {
+	List() []*Mapping
 	Lookup(host string) (targetHost string, ok bool)
 	Add(port uint32, host string)
 	Remove(port uint32)
@@ -28,6 +29,21 @@ type mapperImpl struct {
 	hostnamesByPort *sync.Map
 	hostTable       *sync.Map
 	localIP         net.IP
+}
+
+func (m *mapperImpl) List() []*Mapping {
+	mappings := []*Mapping{}
+	m.hostnamesByPort.Range(func(k, v interface{}) bool {
+		mappings = append(mappings, &Mapping{
+			Addr: Addr{
+				IP:   m.localIP,
+				Port: k.(uint32),
+			},
+			Hostnames: v.([]string),
+		})
+		return true
+	})
+	return mappings
 }
 
 func (m *mapperImpl) Lookup(host string) (targetHost string, ok bool) {

@@ -4,6 +4,9 @@ import (
 	"net"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+
 	"github.com/srvc/ery/pkg/util/netutil"
 )
 
@@ -40,6 +43,7 @@ func Test_Mapper(t *testing.T) {
 
 	m := NewMapper(ip)
 
+	// Test Add
 	m.Add(port1, host1)
 	assertFound(t, m, host1, port1)
 	assertNotFound(t, m, host2)
@@ -52,11 +56,26 @@ func Test_Mapper(t *testing.T) {
 	assertFound(t, m, host1, port1)
 	assertFound(t, m, host3, port1)
 
+	// Test List
+	got := m.List()
+	want := []*Mapping{
+		{Addr: Addr{IP: ip, Port: port1}, Hostnames: []string{host1, host3}},
+		{Addr: Addr{IP: ip, Port: port2}, Hostnames: []string{host2}},
+	}
+	diffOpts := []cmp.Option{
+		cmpopts.SortSlices(func(m1, m2 *Mapping) bool { return m1.Port < m2.Port }),
+	}
+	if diff := cmp.Diff(got, want, diffOpts...); diff != "" {
+		t.Errorf("Returned list differs: (-got +want)\n%s", diff)
+	}
+
+	// Test Remove
 	m.Remove(port1)
 	assertFound(t, m, host2, port2)
 	assertNotFound(t, m, host1)
 	assertNotFound(t, m, host3)
 
+	// Test Clear
 	m.Clear()
 	assertNotFound(t, m, host2)
 }
