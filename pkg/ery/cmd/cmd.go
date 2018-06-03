@@ -21,7 +21,10 @@ func NewEryCommand(c di.AppComponent) *cobra.Command {
 
 	cmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Verbose lovel output")
 
-	cmd.AddCommand(newCmdStart(c))
+	cmd.AddCommand(
+		newCmdStart(c),
+		newCmdVersion(c),
+	)
 
 	cobra.OnInitialize(func() {
 		setupLogger(verbose)
