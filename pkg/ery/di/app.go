@@ -79,7 +79,7 @@ func (c *appComponentImpl) Mapper() domain.Mapper {
 
 func (c *appComponentImpl) APIServer() app.Server {
 	c.initAPIServerOnce.Do(func() {
-		c.apiServer = api.NewServer(c.Mapper())
+		c.apiServer = api.NewServer(c.Mapper(), c.API.Hostname)
 	})
 	return c.apiServer
 }
