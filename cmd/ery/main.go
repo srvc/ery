@@ -4,7 +4,9 @@ import (
 	"log"
 	"os"
 
+	"github.com/srvc/ery/pkg/ery"
 	"github.com/srvc/ery/pkg/ery/cmd"
+	"github.com/srvc/ery/pkg/ery/di"
 )
 
 func main() {
@@ -14,11 +16,30 @@ func main() {
 }
 
 func run() error {
-	command := cmd.NewEryCommand(
-		os.Stdin,
-		os.Stdout,
-		os.Stderr,
-	)
+	cfg := createConfig()
+	component := di.NewAppComponent(cfg)
+	command := cmd.NewEryCommand(component)
 
 	return command.Execute()
+}
+
+var (
+	version, revision, buildDate, releaseType string
+)
+
+func createConfig() *ery.Config {
+	return &ery.Config{
+		InReader:  os.Stdin,
+		OutWriter: os.Stdout,
+		ErrWriter: os.Stderr,
+
+		Version:     version,
+		Revision:    revision,
+		BuildDate:   buildDate,
+		ReleaseType: releaseType,
+
+		API: ery.APIConfig{
+			Hostname: "api.ery.local",
+		},
+	}
 }

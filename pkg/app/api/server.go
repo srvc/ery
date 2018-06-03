@@ -15,22 +15,21 @@ import (
 	"github.com/srvc/ery/pkg/domain"
 )
 
-var (
-	hostnameserver = "api.discoverer.local"
-	addrPortPat    = regexp.MustCompile(`\d+$`)
-)
+var addrPortPat = regexp.MustCompile(`\d+$`)
 
 type server struct {
-	mapper domain.Mapper
-	server *http.Server
-	log    *zap.Logger
+	mapper   domain.Mapper
+	server   *http.Server
+	hostname string
+	log      *zap.Logger
 }
 
 // NewServer creates an API server instance.
-func NewServer(mapper domain.Mapper) app.Server {
+func NewServer(mapper domain.Mapper, hostname string) app.Server {
 	return &server{
-		mapper: mapper,
-		log:    zap.L().Named("api"),
+		mapper:   mapper,
+		hostname: hostname,
+		log:      zap.L().Named("api"),
 	}
 }
 
@@ -45,7 +44,7 @@ func (s *server) Serve(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	s.mapper.Add(uint32(port), hostnameserver)
+	s.mapper.Add(uint32(port), s.hostname)
 
 	s.server = &http.Server{
 		Handler: s.createHandler(),
@@ -53,7 +52,7 @@ func (s *server) Serve(ctx context.Context) error {
 
 	errCh := make(chan error, 1)
 	go func() {
-		s.log.Debug("starting DNS server...", zap.String("addr", addr))
+		s.log.Debug("starting DNS server...", zap.String("addr", addr), zap.String("hostname", s.hostname))
 		errCh <- s.server.Serve(lis)
 	}()
 
