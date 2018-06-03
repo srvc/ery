@@ -10,10 +10,17 @@ type Config struct {
 	Version, Revision      string
 	BuildDate, ReleaseType string
 
-	API APIConfig
+	API    APIConfig
+	Daemon DaemonConfig
 }
 
 // APIConfig is a configuration object concerning in the API server.
 type APIConfig struct {
 	Hostname string
+}
+
+// DaemonConfig is a configuration object concerning in daemon.
+type DaemonConfig struct {
+	Name        string
+	Description string
 }
