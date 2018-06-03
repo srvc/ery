@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	godns "github.com/miekg/dns"
+	"go.uber.org/zap"
 
 	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/domain"
@@ -23,6 +24,7 @@ func NewServer(mapper domain.Mapper, localhost net.IP) app.Server {
 		mapper:    mapper,
 		localhost: localhost,
 		addr:      defaultAddr,
+		log:       zap.L().Named("dns"),
 	}
 }
 
@@ -31,6 +33,7 @@ type server struct {
 	server    *godns.Server
 	localhost net.IP
 	addr      string
+	log       *zap.Logger
 }
 
 func (s *server) Serve(ctx context.Context) error {
@@ -42,12 +45,16 @@ func (s *server) Serve(ctx context.Context) error {
 
 	var err error
 	errCh := make(chan error, 1)
-	go func() { errCh <- s.server.ListenAndServe() }()
+	go func() {
+		s.log.Debug("starting DNS server...", zap.String("addr", s.addr))
+		errCh <- s.server.ListenAndServe()
+	}()
 
 	select {
 	case err = <-errCh:
 		// do nothing
 	case <-ctx.Done():
+		s.log.Debug("shutdowning DNS server...", zap.Error(ctx.Err()))
 		s.server.Shutdown()
 		err = <-errCh
 	}

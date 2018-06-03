@@ -9,6 +9,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"go.uber.org/zap"
 
 	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/domain"
@@ -22,12 +23,14 @@ var (
 type server struct {
 	mapper domain.Mapper
 	server *http.Server
+	log    *zap.Logger
 }
 
 // NewServer creates an API server instance.
 func NewServer(mapper domain.Mapper) app.Server {
 	return &server{
 		mapper: mapper,
+		log:    zap.L().Named("api"),
 	}
 }
 
@@ -49,12 +52,16 @@ func (s *server) Serve(ctx context.Context) error {
 	}
 
 	errCh := make(chan error, 1)
-	go func() { errCh <- s.server.Serve(lis) }()
+	go func() {
+		s.log.Debug("starting DNS server...", zap.String("addr", addr))
+		errCh <- s.server.Serve(lis)
+	}()
 
 	select {
 	case err = <-errCh:
 		// do nothing
 	case <-ctx.Done():
+		s.log.Debug("shutdowning API server...", zap.Error(ctx.Err()))
 		s.server.Shutdown(context.Background())
 		err = <-errCh
 	}

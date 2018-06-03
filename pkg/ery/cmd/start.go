@@ -12,6 +12,7 @@ import (
 	"github.com/srvc/ery/pkg/app/proxy"
 	"github.com/srvc/ery/pkg/domain"
 	"github.com/srvc/ery/pkg/util/netutil"
+	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -50,7 +51,8 @@ func runStartCommand() error {
 	signal.Notify(sigCh, os.Interrupt)
 
 	select {
-	case <-sigCh:
+	case sig := <-sigCh:
+		zap.L().Debug("received signal", zap.Stringer("signal", sig))
 		cancel()
 	case <-ctx.Done():
 		// do nothing
