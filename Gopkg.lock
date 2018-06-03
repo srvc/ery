@@ -103,12 +103,19 @@
   name = "golang.org/x/net"
   packages = [
     "bpf",
+    "context",
     "internal/iana",
     "internal/socket",
     "ipv4",
     "ipv6"
   ]
   revision = "8d282c4e200f6234d5df69ac4ad1ecb709c3df2c"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sync"
+  packages = ["errgroup"]
+  revision = "1d60e4601c6fd243af51cc01ddf169918a5407ca"
 
 [[projects]]
   branch = "master"
@@ -119,6 +126,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8acaefc7b06f8433bdfb8fa14affe0e995beb0fc677b74d27b67c8451157f45a"
+  inputs-digest = "0e2e7e2bbde367e0eecffcbd4acc450f5dc3e32cc7affd06bbd46da0659df225"
   solver-name = "gps-cdcl"
   solver-version = 1
