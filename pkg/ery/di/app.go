@@ -1,7 +1,6 @@
 package di
 
 import (
-	"io"
 	"net"
 	"sync"
 
@@ -17,9 +16,7 @@ import (
 // AppComponent is an interface to provide accessors for dependencies.
 type AppComponent interface {
 	// cli context
-	InReader() io.Reader
-	OutWriter() io.Writer
-	ErrWriter() io.Writer
+	Config() *ery.Config
 	LocalIP() net.IP
 
 	// domain
@@ -34,12 +31,12 @@ type AppComponent interface {
 // NewAppComponent creates a new AppComponent instance.
 func NewAppComponent(cfg *ery.Config) AppComponent {
 	return &appComponentImpl{
-		Config: cfg,
+		config: cfg,
 	}
 }
 
 type appComponentImpl struct {
-	*ery.Config
+	config *ery.Config
 
 	localIP         net.IP
 	initLocalIPOnce sync.Once
@@ -51,16 +48,8 @@ type appComponentImpl struct {
 	initAPIServerOnce, initDNSServerOnce, initProxyServerOnce sync.Once
 }
 
-func (c *appComponentImpl) InReader() io.Reader {
-	return c.Config.InReader
-}
-
-func (c *appComponentImpl) OutWriter() io.Writer {
-	return c.Config.OutWriter
-}
-
-func (c *appComponentImpl) ErrWriter() io.Writer {
-	return c.Config.ErrWriter
+func (c *appComponentImpl) Config() *ery.Config {
+	return c.config
 }
 
 func (c *appComponentImpl) LocalIP() net.IP {
@@ -79,7 +68,7 @@ func (c *appComponentImpl) Mapper() domain.Mapper {
 
 func (c *appComponentImpl) APIServer() app.Server {
 	c.initAPIServerOnce.Do(func() {
-		c.apiServer = api.NewServer(c.Mapper(), c.API.Hostname)
+		c.apiServer = api.NewServer(c.Mapper(), c.Config().API.Hostname)
 	})
 	return c.apiServer
 }
