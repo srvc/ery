@@ -24,7 +24,7 @@ func run() error {
 }
 
 var (
-	version, revision, builldDate, releaseType string
+	version, revision, buildDate, releaseType string
 )
 
 func createConfig() *ery.Config {
@@ -35,7 +35,7 @@ func createConfig() *ery.Config {
 
 		Version:     version,
 		Revision:    revision,
-		BuildDate:   builldDate,
+		BuildDate:   buildDate,
 		ReleaseType: releaseType,
 
 		API: ery.APIConfig{
