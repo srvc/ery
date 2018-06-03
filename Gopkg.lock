@@ -76,6 +76,12 @@
   version = "v1.0.1"
 
 [[projects]]
+  name = "github.com/takama/daemon"
+  packages = ["."]
+  revision = "aa76b0035d1239b7bb3ae1bd84cd88ef2e0a1f1e"
+  version = "0.11.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/valyala/bytebufferpool"
   packages = ["."]
@@ -145,12 +151,18 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = [
+    "unix",
+    "windows",
+    "windows/registry",
+    "windows/svc",
+    "windows/svc/mgr"
+  ]
   revision = "c11f84a56e43e20a78cee75a7c034031ecf57d1f"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6e215a36b034cf6990147c3abf1df16b19478d82f6fa550abf9076c845b096a6"
+  inputs-digest = "2c18f1786b2f32c6440841e82086501740706ed0761913a93633b1ec32a95e59"
   solver-name = "gps-cdcl"
   solver-version = 1

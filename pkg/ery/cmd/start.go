@@ -21,6 +21,7 @@ func newCmdStart(c di.AppComponent) *cobra.Command {
 			return runStartCommand(c)
 		},
 	}
+
 	return cmd
 }
 

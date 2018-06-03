@@ -6,6 +6,7 @@ import (
 
 	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/app/api"
+	"github.com/srvc/ery/pkg/app/daemon"
 	"github.com/srvc/ery/pkg/app/dns"
 	"github.com/srvc/ery/pkg/app/proxy"
 	"github.com/srvc/ery/pkg/domain"
@@ -26,6 +27,7 @@ type AppComponent interface {
 	APIServer() app.Server
 	DNSServer() app.Server
 	ProxyServer() app.Server
+	DaemonFactory() daemon.Factory
 }
 
 // NewAppComponent creates a new AppComponent instance.
@@ -46,6 +48,9 @@ type appComponentImpl struct {
 
 	apiServer, dnsServer, proxyServer                         app.Server
 	initAPIServerOnce, initDNSServerOnce, initProxyServerOnce sync.Once
+
+	daemonFactory         daemon.Factory
+	initDaemonFactoryOnce sync.Once
 }
 
 func (c *appComponentImpl) Config() *ery.Config {
@@ -85,4 +90,12 @@ func (c *appComponentImpl) ProxyServer() app.Server {
 		c.proxyServer = proxy.NewServer(c.Mapper())
 	})
 	return c.proxyServer
+}
+
+func (c *appComponentImpl) DaemonFactory() daemon.Factory {
+	c.initDaemonFactoryOnce.Do(func() {
+		cfg := c.Config().Daemon
+		c.daemonFactory = daemon.NewFactory(cfg.Name, cfg.Description)
+	})
+	return c.daemonFactory
 }
