@@ -1,16 +1,16 @@
 package cmd
 
 import (
-	"io"
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/srvc/ery/pkg/ery/di"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 // NewEryCommand creates a new cobra.Command instance.
-func NewEryCommand(in io.Reader, out, err io.Writer) *cobra.Command {
+func NewEryCommand(c di.AppComponent) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "ery",
 	}
@@ -21,7 +21,7 @@ func NewEryCommand(in io.Reader, out, err io.Writer) *cobra.Command {
 
 	cmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Verbose lovel output")
 
-	cmd.AddCommand(newCmdStart())
+	cmd.AddCommand(newCmdStart(c))
 
 	cobra.OnInitialize(func() {
 		setupLogger(verbose)

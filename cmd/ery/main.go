@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/srvc/ery/pkg/ery/cmd"
+	"github.com/srvc/ery/pkg/ery/di"
 )
 
 func main() {
@@ -15,9 +16,11 @@ func main() {
 
 func run() error {
 	command := cmd.NewEryCommand(
-		os.Stdin,
-		os.Stdout,
-		os.Stderr,
+		di.NewAppComponent(
+			os.Stdin,
+			os.Stdout,
+			os.Stderr,
+		),
 	)
 
 	return command.Execute()
