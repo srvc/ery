@@ -10,6 +10,7 @@ import (
 	"github.com/srvc/ery/pkg/app/dns"
 	"github.com/srvc/ery/pkg/app/proxy"
 	"github.com/srvc/ery/pkg/domain"
+	"github.com/srvc/ery/pkg/ery"
 	"github.com/srvc/ery/pkg/util/netutil"
 )
 
@@ -31,20 +32,14 @@ type AppComponent interface {
 }
 
 // NewAppComponent creates a new AppComponent instance.
-func NewAppComponent(
-	inReader io.Reader,
-	outWriter, errWriter io.Writer,
-) AppComponent {
+func NewAppComponent(cfg *ery.Config) AppComponent {
 	return &appComponentImpl{
-		inReader:  inReader,
-		outWriter: outWriter,
-		errWriter: errWriter,
+		Config: cfg,
 	}
 }
 
 type appComponentImpl struct {
-	inReader             io.Reader
-	outWriter, errWriter io.Writer
+	*ery.Config
 
 	localIP         net.IP
 	initLocalIPOnce sync.Once
@@ -57,15 +52,15 @@ type appComponentImpl struct {
 }
 
 func (c *appComponentImpl) InReader() io.Reader {
-	return c.inReader
+	return c.Config.InReader
 }
 
 func (c *appComponentImpl) OutWriter() io.Writer {
-	return c.outWriter
+	return c.Config.OutWriter
 }
 
 func (c *appComponentImpl) ErrWriter() io.Writer {
-	return c.errWriter
+	return c.Config.ErrWriter
 }
 
 func (c *appComponentImpl) LocalIP() net.IP {
