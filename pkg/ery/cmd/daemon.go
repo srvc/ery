@@ -10,6 +10,17 @@ import (
 	"github.com/srvc/ery/pkg/ery/di"
 )
 
+func newCmdDaemon(c di.AppComponent) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "daemon",
+		Short: "Manage daemon",
+	}
+
+	cmd.AddCommand(newDaemonCmds(c)...)
+
+	return cmd
+}
+
 func newDaemonCmds(c di.AppComponent) (cmds []*cobra.Command) {
 	funcs := []struct {
 		name string
@@ -18,21 +29,32 @@ func newDaemonCmds(c di.AppComponent) (cmds []*cobra.Command) {
 	}{
 		{
 			name: "install",
+			desc: "Register daemon to system",
 			run:  func(d daemon.Daemon) (string, error) { return d.Install("start") },
 		},
 		{
 			name: "remove",
+			desc: "Unregister daemon to system",
 			run:  func(d daemon.Daemon) (string, error) { return d.Remove() },
 		},
 		{
+			name: "start",
+			desc: "Start servers as daemon",
+			run:  func(d daemon.Daemon) (string, error) { return d.Start() },
+		},
+		{
 			name: "stop",
+			desc: "Stop servers daemon",
 			run:  func(d daemon.Daemon) (string, error) { return d.Stop() },
 		},
 		{
 			name: "status",
+			desc: "Show daemon status",
 			run:  func(d daemon.Daemon) (string, error) { return d.Status() },
 		},
 	}
+
+	log := zap.L().Named("daemon")
 
 	for _, f := range funcs {
 		f := f
@@ -42,7 +64,6 @@ func newDaemonCmds(c di.AppComponent) (cmds []*cobra.Command) {
 			SilenceErrors: true,
 			SilenceUsage:  true,
 			RunE: func(*cobra.Command, []string) error {
-				log := zap.L().Named("daemon")
 
 				d, err := c.DaemonFactory().Get()
 				if err != nil {
