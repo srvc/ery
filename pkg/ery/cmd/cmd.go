@@ -25,6 +25,7 @@ func NewEryCommand(c di.AppComponent) *cobra.Command {
 		newCmdStart(c),
 		newCmdVersion(c),
 	)
+	cmd.AddCommand(newDaemonCmds(c)...)
 
 	cobra.OnInitialize(func() {
 		setupLogger(verbose)

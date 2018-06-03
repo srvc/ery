@@ -41,5 +41,10 @@ func createConfig() *ery.Config {
 		API: ery.APIConfig{
 			Hostname: "api.ery.local",
 		},
+
+		Daemon: ery.DaemonConfig{
+			Name:        "ery",
+			Description: "Discover services in local",
+		},
 	}
 }

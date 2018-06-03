@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 
@@ -14,13 +15,21 @@ import (
 )
 
 func newCmdStart(c di.AppComponent) *cobra.Command {
+	var asDaemon bool
+
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "Start ery server",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if asDaemon {
+				return runDaemon(c)
+			}
 			return runStartCommand(c)
 		},
 	}
+
+	cmd.PersistentFlags().BoolVarP(&asDaemon, "daemon", "d", false, "Start as daemon")
+
 	return cmd
 }
 
@@ -55,4 +64,18 @@ func runStartCommand(c di.AppComponent) error {
 	close(sigCh)
 
 	return eg.Wait()
+}
+
+func runDaemon(c di.AppComponent) error {
+	d, err := c.DaemonFactory().Get()
+	if err == nil {
+		var msg string
+		msg, err = d.Start()
+		zap.L().Debug("start daemon", zap.String("message", msg), zap.Error(err))
+		fmt.Fprintln(c.Config().OutWriter, msg)
+	}
+	if err != nil {
+		fmt.Fprintln(c.Config().ErrWriter, err)
+	}
+	return err
 }
