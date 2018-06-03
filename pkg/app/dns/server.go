@@ -14,14 +14,15 @@ import (
 var (
 	defaultTTL     uint32 = 60
 	defaultNetwork        = "udp"
+	defaultAddr           = ":53"
 )
 
 // NewServer creates a DNS server instance.
-func NewServer(mapper domain.Mapper, localhost net.IP, addr string) app.Server {
+func NewServer(mapper domain.Mapper, localhost net.IP) app.Server {
 	return &server{
 		mapper:    mapper,
 		localhost: localhost,
-		addr:      addr,
+		addr:      defaultAddr,
 	}
 }
 
@@ -32,17 +33,26 @@ type server struct {
 	addr      string
 }
 
-func (s *server) Serve() error {
+func (s *server) Serve(ctx context.Context) error {
 	s.server = &godns.Server{
 		Handler: godns.HandlerFunc(s.handle),
 		Addr:    s.addr,
 		Net:     defaultNetwork,
 	}
-	return s.server.ListenAndServe()
-}
 
-func (s *server) Shutdown(context.Context) error {
-	return s.server.Shutdown()
+	var err error
+	errCh := make(chan error, 1)
+	go func() { errCh <- s.server.ListenAndServe() }()
+
+	select {
+	case err = <-errCh:
+		// do nothing
+	case <-ctx.Done():
+		s.server.Shutdown()
+		err = <-errCh
+	}
+
+	return err
 }
 
 func (s *server) Addr() string {

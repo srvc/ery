@@ -31,7 +31,7 @@ func NewServer(mapper domain.Mapper) app.Server {
 	}
 }
 
-func (s *server) Serve() error {
+func (s *server) Serve(ctx context.Context) error {
 	lis, err := net.Listen("tcp", ":0")
 	if err != nil {
 		return err
@@ -48,12 +48,18 @@ func (s *server) Serve() error {
 		Handler: s.createHandler(),
 	}
 
-	err = s.server.Serve(lis)
-	return err
-}
+	errCh := make(chan error, 1)
+	go func() { errCh <- s.server.Serve(lis) }()
 
-func (s *server) Shutdown(ctx context.Context) error {
-	return s.server.Shutdown(ctx)
+	select {
+	case err = <-errCh:
+		// do nothing
+	case <-ctx.Done():
+		s.server.Shutdown(context.Background())
+		err = <-errCh
+	}
+
+	return err
 }
 
 func (s *server) Addr() string {

@@ -15,13 +15,10 @@ var (
 )
 
 // NewServer creates a reverse proxy server instance.
-func NewServer(mapper domain.Mapper, addr string) app.Server {
-	if addr != "" {
-		addr = defaultAddr
-	}
+func NewServer(mapper domain.Mapper) app.Server {
 	return &server{
 		mapper: mapper,
-		addr:   addr,
+		addr:   defaultAddr,
 	}
 }
 
@@ -31,16 +28,25 @@ type server struct {
 	addr   string
 }
 
-func (s *server) Serve() error {
+func (s *server) Serve(ctx context.Context) error {
 	s.server = &http.Server{
 		Addr:    s.addr,
 		Handler: &httputil.ReverseProxy{Director: s.handle},
 	}
-	return s.server.ListenAndServe()
-}
 
-func (s *server) Shutdown(ctx context.Context) error {
-	return s.server.Shutdown(ctx)
+	var err error
+	errCh := make(chan error, 1)
+	go func() { errCh <- s.server.ListenAndServe() }()
+
+	select {
+	case err = <-errCh:
+		// do nothing
+	case <-ctx.Done():
+		s.server.Shutdown(context.TODO())
+		err = <-errCh
+	}
+
+	return err
 }
 
 func (s *server) Addr() string {
