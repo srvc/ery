@@ -19,21 +19,21 @@ var (
 )
 
 // NewServer creates a DNS server instance.
-func NewServer(mapper domain.Mapper, localhost net.IP) app.Server {
+func NewServer(mappingRepo domain.MappingRepository, localhost net.IP) app.Server {
 	return &server{
-		mapper:    mapper,
-		localhost: localhost,
-		addr:      defaultAddr,
-		log:       zap.L().Named("dns"),
+		mappingRepo: mappingRepo,
+		localhost:   localhost,
+		addr:        defaultAddr,
+		log:         zap.L().Named("dns"),
 	}
 }
 
 type server struct {
-	mapper    domain.Mapper
-	server    *godns.Server
-	localhost net.IP
-	addr      string
-	log       *zap.Logger
+	mappingRepo domain.MappingRepository
+	server      *godns.Server
+	localhost   net.IP
+	addr        string
+	log         *zap.Logger
 }
 
 func (s *server) Serve(ctx context.Context) error {
@@ -90,7 +90,8 @@ func (s *server) handle(w godns.ResponseWriter, req *godns.Msg) {
 
 func (s *server) handlable(q godns.Question) (ok bool) {
 	if q.Qtype == godns.TypeA && q.Qclass == godns.ClassINET {
-		_, ok = s.mapper.Lookup(strings.TrimSuffix(q.Name, "."))
+		_, err := s.mappingRepo.GetBySourceHost(strings.TrimSuffix(q.Name, "."))
+		ok = err == nil
 	}
 	return
 }

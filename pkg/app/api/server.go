@@ -18,18 +18,18 @@ import (
 var addrPortPat = regexp.MustCompile(`\d+$`)
 
 type server struct {
-	mapper   domain.Mapper
-	server   *http.Server
-	hostname string
-	log      *zap.Logger
+	mappingRepo domain.MappingRepository
+	server      *http.Server
+	hostname    string
+	log         *zap.Logger
 }
 
 // NewServer creates an API server instance.
-func NewServer(mapper domain.Mapper, hostname string) app.Server {
+func NewServer(mappingRepo domain.MappingRepository, hostname string) app.Server {
 	return &server{
-		mapper:   mapper,
-		hostname: hostname,
-		log:      zap.L().Named("api"),
+		mappingRepo: mappingRepo,
+		hostname:    hostname,
+		log:         zap.L().Named("api"),
 	}
 }
 
@@ -44,7 +44,10 @@ func (s *server) Serve(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	s.mapper.Add(uint32(port), s.hostname)
+	err = s.mappingRepo.Create(uint32(port), s.hostname)
+	if err != nil {
+		return err
+	}
 
 	s.server = &http.Server{
 		Handler: s.createHandler(),
@@ -99,7 +102,10 @@ func (s *server) handlePostMappings(c echo.Context) error {
 	}
 
 	for _, hostname := range req.Hostnames {
-		s.mapper.Add(uint32(req.Port), hostname)
+		err := s.mappingRepo.Create(uint32(req.Port), hostname)
+		if err != nil {
+			return err
+		}
 	}
 
 	c.NoContent(http.StatusCreated)
@@ -117,7 +123,11 @@ func (s *server) handleGetStatus(c echo.Context) error {
 		Mappings []Mapping `json:"mappings"`
 	}
 
-	mappings := s.mapper.List()
+	mappings, err := s.mappingRepo.List()
+	if err != nil {
+		return nil
+	}
+
 	resp := &Response{
 		Mappings: make([]Mapping, 0, len(mappings)),
 	}
