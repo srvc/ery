@@ -75,20 +75,22 @@ func (s *server) Addr() string {
 	return s.server.Addr
 }
 
+func (s *server) err(c echo.Context, code int, err error) {
+	c.JSON(code, struct {
+		Error string `json:"error"`
+	}{Error: err.Error()})
+}
+
 func (s *server) createHandler() http.Handler {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	e.GET("/status", s.handleGetStatus)
-	e.POST("/mapping", s.handlePostMappings)
+	e.GET("/mappings", s.handleGetMappings)
+	e.POST("/mappings", s.handlePostMappings)
+	e.DELETE("/mappings/:port", s.handleDeleteMappings)
 
 	return e
-}
-
-func (s *server) handlePing(c echo.Context) error {
-	c.String(http.StatusOK, "pong")
-	return nil
 }
 
 func (s *server) handlePostMappings(c echo.Context) error {
@@ -98,14 +100,14 @@ func (s *server) handlePostMappings(c echo.Context) error {
 	}
 
 	if err := c.Bind(&req); err != nil {
+		s.err(c, http.StatusBadRequest, err)
 		return err
 	}
 
-	for _, hostname := range req.Hostnames {
-		err := s.mappingRepo.Create(uint32(req.Port), hostname)
-		if err != nil {
-			return err
-		}
+	err := s.mappingRepo.Create(uint32(req.Port), req.Hostnames...)
+	if err != nil {
+		s.err(c, http.StatusInternalServerError, err)
+		return err
 	}
 
 	c.NoContent(http.StatusCreated)
@@ -113,7 +115,7 @@ func (s *server) handlePostMappings(c echo.Context) error {
 	return nil
 }
 
-func (s *server) handleGetStatus(c echo.Context) error {
+func (s *server) handleGetMappings(c echo.Context) error {
 	type Mapping struct {
 		IP        string   `json:"ip"`
 		Port      uint32   `json:"prot"`
@@ -125,7 +127,8 @@ func (s *server) handleGetStatus(c echo.Context) error {
 
 	mappings, err := s.mappingRepo.List()
 	if err != nil {
-		return nil
+		s.err(c, http.StatusInternalServerError, err)
+		return err
 	}
 
 	resp := &Response{
@@ -142,5 +145,22 @@ func (s *server) handleGetStatus(c echo.Context) error {
 
 	c.JSON(http.StatusOK, resp)
 
+	return nil
+}
+
+func (s *server) handleDeleteMappings(c echo.Context) error {
+	port, err := strconv.ParseUint(c.Param("port"), 10, 32)
+	if err != nil {
+		s.err(c, http.StatusBadRequest, err)
+		return err
+	}
+
+	err = s.mappingRepo.Delete(uint32(port))
+	if err != nil {
+		s.err(c, http.StatusInternalServerError, err)
+		return err
+	}
+
+	c.NoContent(http.StatusNoContent)
 	return nil
 }
