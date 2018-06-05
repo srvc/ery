@@ -22,7 +22,6 @@ type AppComponent interface {
 	LocalIP() net.IP
 
 	// domain
-	Mapper() domain.Mapper
 	LocalMappingRepository() domain.MappingRepository
 
 	// app
@@ -45,9 +44,6 @@ type appComponentImpl struct {
 	localIP         net.IP
 	initLocalIPOnce sync.Once
 
-	mapper         domain.Mapper
-	initMapperOnce sync.Once
-
 	apiServer, dnsServer, proxyServer                         app.Server
 	initAPIServerOnce, initDNSServerOnce, initProxyServerOnce sync.Once
 
@@ -67,13 +63,6 @@ func (c *appComponentImpl) LocalIP() net.IP {
 		c.localIP = netutil.LocalhostIP()
 	})
 	return c.localIP
-}
-
-func (c *appComponentImpl) Mapper() domain.Mapper {
-	c.initMapperOnce.Do(func() {
-		c.mapper = domain.NewMapper(c.LocalIP())
-	})
-	return c.mapper
 }
 
 func (c *appComponentImpl) APIServer() app.Server {
