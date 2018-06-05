@@ -16,19 +16,19 @@ var (
 )
 
 // NewServer creates a reverse proxy server instance.
-func NewServer(mapper domain.Mapper) app.Server {
+func NewServer(mappingRepo domain.MappingRepository) app.Server {
 	return &server{
-		mapper: mapper,
-		addr:   defaultAddr,
-		log:    zap.L().Named("proxy"),
+		mappingRepo: mappingRepo,
+		addr:        defaultAddr,
+		log:         zap.L().Named("proxy"),
 	}
 }
 
 type server struct {
-	mapper domain.Mapper
-	server *http.Server
-	addr   string
-	log    *zap.Logger
+	mappingRepo domain.MappingRepository
+	server      *http.Server
+	addr        string
+	log         *zap.Logger
 }
 
 func (s *server) Serve(ctx context.Context) error {
@@ -61,8 +61,8 @@ func (s *server) Addr() string {
 }
 
 func (s *server) handle(req *http.Request) {
-	host, ok := s.mapper.Lookup(req.Host)
-	if ok {
+	host, err := s.mappingRepo.GetBySourceHost(req.Host)
+	if err == nil {
 		req.URL.Host = host
 	} else {
 		req.URL.Host = req.Host

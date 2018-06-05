@@ -9,6 +9,7 @@ import (
 	"github.com/srvc/ery/pkg/app/daemon"
 	"github.com/srvc/ery/pkg/app/dns"
 	"github.com/srvc/ery/pkg/app/proxy"
+	"github.com/srvc/ery/pkg/data/local"
 	"github.com/srvc/ery/pkg/domain"
 	"github.com/srvc/ery/pkg/ery"
 	"github.com/srvc/ery/pkg/util/netutil"
@@ -21,7 +22,7 @@ type AppComponent interface {
 	LocalIP() net.IP
 
 	// domain
-	Mapper() domain.Mapper
+	LocalMappingRepository() domain.MappingRepository
 
 	// app
 	APIServer() app.Server
@@ -43,14 +44,14 @@ type appComponentImpl struct {
 	localIP         net.IP
 	initLocalIPOnce sync.Once
 
-	mapper         domain.Mapper
-	initMapperOnce sync.Once
-
 	apiServer, dnsServer, proxyServer                         app.Server
 	initAPIServerOnce, initDNSServerOnce, initProxyServerOnce sync.Once
 
 	daemonFactory         daemon.Factory
 	initDaemonFactoryOnce sync.Once
+
+	localMappingRepo         domain.MappingRepository
+	initLocalMappingRepoOnce sync.Once
 }
 
 func (c *appComponentImpl) Config() *ery.Config {
@@ -64,30 +65,23 @@ func (c *appComponentImpl) LocalIP() net.IP {
 	return c.localIP
 }
 
-func (c *appComponentImpl) Mapper() domain.Mapper {
-	c.initMapperOnce.Do(func() {
-		c.mapper = domain.NewMapper(c.LocalIP())
-	})
-	return c.mapper
-}
-
 func (c *appComponentImpl) APIServer() app.Server {
 	c.initAPIServerOnce.Do(func() {
-		c.apiServer = api.NewServer(c.Mapper(), c.Config().API.Hostname)
+		c.apiServer = api.NewServer(c.LocalMappingRepository(), c.Config().API.Hostname)
 	})
 	return c.apiServer
 }
 
 func (c *appComponentImpl) DNSServer() app.Server {
 	c.initDNSServerOnce.Do(func() {
-		c.dnsServer = dns.NewServer(c.Mapper(), c.LocalIP())
+		c.dnsServer = dns.NewServer(c.LocalMappingRepository(), c.LocalIP())
 	})
 	return c.dnsServer
 }
 
 func (c *appComponentImpl) ProxyServer() app.Server {
 	c.initProxyServerOnce.Do(func() {
-		c.proxyServer = proxy.NewServer(c.Mapper())
+		c.proxyServer = proxy.NewServer(c.LocalMappingRepository())
 	})
 	return c.proxyServer
 }
@@ -98,4 +92,11 @@ func (c *appComponentImpl) DaemonFactory() daemon.Factory {
 		c.daemonFactory = daemon.NewFactory(cfg.Name, cfg.Description)
 	})
 	return c.daemonFactory
+}
+
+func (c *appComponentImpl) LocalMappingRepository() domain.MappingRepository {
+	c.initLocalMappingRepoOnce.Do(func() {
+		c.localMappingRepo = local.NewMappingRepository(c.LocalIP())
+	})
+	return c.localMappingRepo
 }
