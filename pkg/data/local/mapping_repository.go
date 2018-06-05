@@ -50,9 +50,15 @@ func (m *mappingRepositoryImpl) GetBySourceHost(host string) (targetHost string,
 	return
 }
 
-func (m *mappingRepositoryImpl) Create(port uint32, host string) error {
-	m.appendHostname(port, host)
-	m.hostTable.Store(host, netutil.HostAndPort(m.localIP.String(), port))
+func (m *mappingRepositoryImpl) Create(port uint32, hosts ...string) error {
+	if len(hosts) == 0 {
+		return fmt.Errorf(":%d needs to map at least 1 hosts", port)
+	}
+	target := netutil.HostAndPort(m.localIP.String(), port)
+	for _, host := range hosts {
+		m.appendHostname(port, host)
+		m.hostTable.Store(host, target)
+	}
 	return nil
 }
 
