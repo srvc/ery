@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/takama/daemon"
 	"go.uber.org/zap"
@@ -68,7 +69,7 @@ func newDaemonCmds(c di.AppComponent) (cmds []*cobra.Command) {
 				d, err := c.DaemonFactory().Get()
 				if err != nil {
 					log.Error("failed to init daemon", zap.Error(err))
-					return err
+					return errors.WithStack(err)
 				}
 
 				msg, err := f.run(d)
@@ -79,7 +80,7 @@ func newDaemonCmds(c di.AppComponent) (cmds []*cobra.Command) {
 					fmt.Fprintln(c.Config().ErrWriter, err)
 				}
 				fmt.Fprintln(c.Config().OutWriter, msg)
-				return err
+				return errors.WithStack(err)
 			},
 		})
 	}

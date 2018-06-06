@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -18,7 +19,7 @@ func newCmdStart(c di.AppComponent) *cobra.Command {
 		Use:   "start",
 		Short: "Start ery server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runStartCommand(c)
+			return errors.WithStack(runStartCommand(c))
 		},
 	}
 
@@ -37,7 +38,7 @@ func runStartCommand(c di.AppComponent) error {
 
 	for _, s := range svrs {
 		s := s
-		eg.Go(func() error { return s.Serve(ctx) })
+		eg.Go(func() error { return errors.WithStack(s.Serve(ctx)) })
 	}
 
 	// Observe os signals
@@ -55,5 +56,5 @@ func runStartCommand(c di.AppComponent) error {
 	signal.Stop(sigCh)
 	close(sigCh)
 
-	return eg.Wait()
+	return errors.WithStack(eg.Wait())
 }

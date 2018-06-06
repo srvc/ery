@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	godns "github.com/miekg/dns"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/srvc/ery/pkg/app"
@@ -47,19 +48,19 @@ func (s *server) Serve(ctx context.Context) error {
 	errCh := make(chan error, 1)
 	go func() {
 		s.log.Debug("starting DNS server...", zap.String("addr", s.addr))
-		errCh <- s.server.ListenAndServe()
+		errCh <- errors.WithStack(s.server.ListenAndServe())
 	}()
 
 	select {
 	case err = <-errCh:
-		// do nothing
+		err = errors.WithStack(err)
 	case <-ctx.Done():
 		s.log.Debug("shutdowning DNS server...", zap.Error(ctx.Err()))
 		s.server.Shutdown()
-		err = <-errCh
+		err = errors.WithStack(<-errCh)
 	}
 
-	return err
+	return errors.WithStack(err)
 }
 
 func (s *server) Addr() string {
