@@ -1,9 +1,10 @@
 package local
 
 import (
-	"fmt"
 	"net"
 	"sync"
+
+	"github.com/pkg/errors"
 
 	"github.com/srvc/ery/pkg/domain"
 	"github.com/srvc/ery/pkg/util/netutil"
@@ -44,7 +45,7 @@ func (m *mappingRepositoryImpl) GetBySourceHost(host string) (targetHost string,
 		var ok bool
 		targetHost, ok = v.(string)
 		if !ok {
-			err = fmt.Errorf("%s is not found", host)
+			err = errors.Errorf("%s is not found", host)
 		}
 	}
 	return
