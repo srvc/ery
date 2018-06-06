@@ -3,6 +3,7 @@ package daemon
 import (
 	"sync"
 
+	"github.com/pkg/errors"
 	"github.com/takama/daemon"
 )
 
@@ -30,5 +31,5 @@ func (f *factoryImpl) Get() (daemon.Daemon, error) {
 	f.initOnce.Do(func() {
 		f.daemon, err = daemon.New(f.name, f.description)
 	})
-	return f.daemon, err
+	return f.daemon, errors.WithStack(err)
 }

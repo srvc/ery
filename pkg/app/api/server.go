@@ -9,6 +9,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/srvc/ery/pkg/app"
@@ -36,17 +37,17 @@ func NewServer(mappingRepo domain.MappingRepository, hostname string) app.Server
 func (s *server) Serve(ctx context.Context) error {
 	lis, err := net.Listen("tcp", ":0")
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	addr := lis.Addr().String()
 	port, err := strconv.Atoi(string(addrPortPat.FindSubmatch([]byte(addr))[0]))
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to extract port number from address: %s", addr)
 	}
 	err = s.mappingRepo.Create(uint32(port), s.hostname)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	s.server = &http.Server{
@@ -56,19 +57,19 @@ func (s *server) Serve(ctx context.Context) error {
 	errCh := make(chan error, 1)
 	go func() {
 		s.log.Debug("starting DNS server...", zap.String("addr", addr), zap.String("hostname", s.hostname))
-		errCh <- s.server.Serve(lis)
+		errCh <- errors.WithStack(s.server.Serve(lis))
 	}()
 
 	select {
 	case err = <-errCh:
-		// do nothing
+		err = errors.WithStack(err)
 	case <-ctx.Done():
 		s.log.Debug("shutdowning API server...", zap.Error(ctx.Err()))
 		s.server.Shutdown(context.Background())
-		err = <-errCh
+		err = errors.WithStack(<-errCh)
 	}
 
-	return err
+	return errors.WithStack(err)
 }
 
 func (s *server) Addr() string {
@@ -101,13 +102,13 @@ func (s *server) handlePostMappings(c echo.Context) error {
 
 	if err := c.Bind(&req); err != nil {
 		s.err(c, http.StatusBadRequest, err)
-		return err
+		return errors.WithStack(err)
 	}
 
 	err := s.mappingRepo.Create(uint32(req.Port), req.Hostnames...)
 	if err != nil {
 		s.err(c, http.StatusInternalServerError, err)
-		return err
+		return errors.WithStack(err)
 	}
 
 	c.NoContent(http.StatusCreated)
@@ -128,7 +129,7 @@ func (s *server) handleGetMappings(c echo.Context) error {
 	mappings, err := s.mappingRepo.List()
 	if err != nil {
 		s.err(c, http.StatusInternalServerError, err)
-		return err
+		return errors.WithStack(err)
 	}
 
 	resp := &Response{
@@ -152,13 +153,13 @@ func (s *server) handleDeleteMappings(c echo.Context) error {
 	port, err := strconv.ParseUint(c.Param("port"), 10, 32)
 	if err != nil {
 		s.err(c, http.StatusBadRequest, err)
-		return err
+		return errors.WithStack(err)
 	}
 
 	err = s.mappingRepo.Delete(uint32(port))
 	if err != nil {
 		s.err(c, http.StatusInternalServerError, err)
-		return err
+		return errors.WithStack(err)
 	}
 
 	c.NoContent(http.StatusNoContent)

@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/pkg/errors"
 	"github.com/srvc/ery/pkg/ery"
 	"github.com/srvc/ery/pkg/ery/cmd"
 	"github.com/srvc/ery/pkg/ery/di"
@@ -20,7 +21,7 @@ func run() error {
 	component := di.NewAppComponent(cfg)
 	command := cmd.NewEryCommand(component)
 
-	return command.Execute()
+	return errors.WithStack(command.Execute())
 }
 
 var (
