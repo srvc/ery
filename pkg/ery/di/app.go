@@ -107,7 +107,7 @@ func (c *appComponentImpl) LocalMappingRepository() domain.MappingRepository {
 
 func (c *appComponentImpl) RemoteMappingRepository() domain.MappingRepository {
 	c.initRemoteMappingRepoOnce.Do(func() {
-		c.remoteMappingRepo = remote.NewMappingRepository(c.Config().API.Hostname)
+		c.remoteMappingRepo = remote.NewMappingRepository("http://" + c.Config().API.Hostname)
 	})
 	return c.remoteMappingRepo
 }
