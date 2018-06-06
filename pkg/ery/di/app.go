@@ -10,6 +10,7 @@ import (
 	"github.com/srvc/ery/pkg/app/dns"
 	"github.com/srvc/ery/pkg/app/proxy"
 	"github.com/srvc/ery/pkg/data/local"
+	"github.com/srvc/ery/pkg/data/remote"
 	"github.com/srvc/ery/pkg/domain"
 	"github.com/srvc/ery/pkg/ery"
 	"github.com/srvc/ery/pkg/util/netutil"
@@ -23,6 +24,7 @@ type AppComponent interface {
 
 	// domain
 	LocalMappingRepository() domain.MappingRepository
+	RemoteMappingRepository() domain.MappingRepository
 
 	// app
 	APIServer() app.Server
@@ -50,8 +52,10 @@ type appComponentImpl struct {
 	daemonFactory         daemon.Factory
 	initDaemonFactoryOnce sync.Once
 
-	localMappingRepo         domain.MappingRepository
-	initLocalMappingRepoOnce sync.Once
+	localMappingRepo          domain.MappingRepository
+	initLocalMappingRepoOnce  sync.Once
+	remoteMappingRepo         domain.MappingRepository
+	initRemoteMappingRepoOnce sync.Once
 }
 
 func (c *appComponentImpl) Config() *ery.Config {
@@ -99,4 +103,11 @@ func (c *appComponentImpl) LocalMappingRepository() domain.MappingRepository {
 		c.localMappingRepo = local.NewMappingRepository(c.LocalIP())
 	})
 	return c.localMappingRepo
+}
+
+func (c *appComponentImpl) RemoteMappingRepository() domain.MappingRepository {
+	c.initRemoteMappingRepoOnce.Do(func() {
+		c.remoteMappingRepo = remote.NewMappingRepository("http://" + c.Config().API.Hostname)
+	})
+	return c.remoteMappingRepo
 }

@@ -4,7 +4,7 @@ package domain
 type MappingRepository interface {
 	List() ([]*Mapping, error)
 	GetBySourceHost(host string) (targetHost string, err error)
-	Create(port uint32, host string) error
+	Create(port uint32, hosts ...string) error
 	Delete(port uint32) error
 	DeleteAll() error
 }
