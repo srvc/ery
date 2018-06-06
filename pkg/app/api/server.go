@@ -119,7 +119,7 @@ func (s *server) handlePostMappings(c echo.Context) error {
 func (s *server) handleGetMappings(c echo.Context) error {
 	type Mapping struct {
 		IP        string   `json:"ip"`
-		Port      uint32   `json:"prot"`
+		Port      uint32   `json:"port"`
 		Hostnames []string `json:"hostnames"`
 	}
 	type Response struct {

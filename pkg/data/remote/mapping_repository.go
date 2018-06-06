@@ -72,7 +72,7 @@ func (m *mappingRepositoryImpl) GetBySourceHost(host string) (targetHost string,
 
 func (m *mappingRepositoryImpl) Create(port uint32, hosts ...string) error {
 	data, err := json.Marshal(struct {
-		Port      uint32   `json:"prot"`
+		Port      uint32   `json:"port"`
 		Hostnames []string `json:"hostnames"`
 	}{
 		Port:      port,
