@@ -21,8 +21,8 @@ func PortFromString(str string) (Port, error) {
 
 // Addr contains ip and port.
 type Addr struct {
-	Host string
-	Port Port
+	Host string `json:"host"`
+	Port Port   `json:"port"`
 }
 
 // NewAddr creates a new Addr object.

@@ -4,8 +4,6 @@ import (
 	"context"
 	"net"
 	"net/http"
-	"regexp"
-	"strconv"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -15,8 +13,6 @@ import (
 	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/domain"
 )
-
-var addrPortPat = regexp.MustCompile(`\d+$`)
 
 type server struct {
 	mappingRepo domain.MappingRepository
@@ -40,12 +36,13 @@ func (s *server) Serve(ctx context.Context) error {
 		return errors.WithStack(err)
 	}
 
-	addr := lis.Addr().String()
-	port, err := strconv.Atoi(string(addrPortPat.FindSubmatch([]byte(addr))[0]))
-	if err != nil {
-		return errors.Wrapf(err, "failed to extract port number from address: %s", addr)
-	}
-	err = s.mappingRepo.Create(uint32(port), s.hostname)
+	addr := lis.Addr()
+	err = s.mappingRepo.Create(ctx, &domain.Mapping{
+		Host: s.hostname,
+		PortAddrMap: domain.PortAddrMap{
+			80: domain.LocalAddr(domain.Port(addr.(*net.TCPAddr).Port)),
+		},
+	})
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -56,7 +53,7 @@ func (s *server) Serve(ctx context.Context) error {
 
 	errCh := make(chan error, 1)
 	go func() {
-		s.log.Debug("starting DNS server...", zap.String("addr", addr), zap.String("hostname", s.hostname))
+		s.log.Debug("starting DNS server...", zap.Stringer("addr", addr), zap.String("hostname", s.hostname))
 		errCh <- errors.WithStack(s.server.Serve(lis))
 	}()
 
@@ -89,23 +86,20 @@ func (s *server) createHandler() http.Handler {
 
 	e.GET("/mappings", s.handleGetMappings)
 	e.POST("/mappings", s.handlePostMappings)
-	e.DELETE("/mappings/:port", s.handleDeleteMappings)
+	e.DELETE("/mappings/:host", s.handleDeleteMappings)
 
 	return e
 }
 
 func (s *server) handlePostMappings(c echo.Context) error {
-	var req struct {
-		Port      uint32   `json:"port" validate:"required"`
-		Hostnames []string `json:"hostnames" validate:"required"`
-	}
+	var req *domain.Mapping
 
 	if err := c.Bind(&req); err != nil {
 		s.err(c, http.StatusBadRequest, err)
 		return errors.WithStack(err)
 	}
 
-	err := s.mappingRepo.Create(uint32(req.Port), req.Hostnames...)
+	err := s.mappingRepo.Create(c.Request().Context(), req)
 	if err != nil {
 		s.err(c, http.StatusInternalServerError, err)
 		return errors.WithStack(err)
@@ -117,31 +111,15 @@ func (s *server) handlePostMappings(c echo.Context) error {
 }
 
 func (s *server) handleGetMappings(c echo.Context) error {
-	type Mapping struct {
-		IP        string   `json:"ip"`
-		Port      uint32   `json:"port"`
-		Hostnames []string `json:"hostnames"`
-	}
-	type Response struct {
-		Mappings []Mapping `json:"mappings"`
-	}
+	resp := struct {
+		Mappings []*domain.Mapping `json:"mappings"`
+	}{}
+	var err error
 
-	mappings, err := s.mappingRepo.List()
+	resp.Mappings, err = s.mappingRepo.List(c.Request().Context())
 	if err != nil {
 		s.err(c, http.StatusInternalServerError, err)
 		return errors.WithStack(err)
-	}
-
-	resp := &Response{
-		Mappings: make([]Mapping, 0, len(mappings)),
-	}
-
-	for _, m := range mappings {
-		resp.Mappings = append(resp.Mappings, Mapping{
-			IP:        m.IP.String(),
-			Port:      m.Port,
-			Hostnames: m.Hostnames,
-		})
 	}
 
 	c.JSON(http.StatusOK, resp)
@@ -150,13 +128,7 @@ func (s *server) handleGetMappings(c echo.Context) error {
 }
 
 func (s *server) handleDeleteMappings(c echo.Context) error {
-	port, err := strconv.ParseUint(c.Param("port"), 10, 32)
-	if err != nil {
-		s.err(c, http.StatusBadRequest, err)
-		return errors.WithStack(err)
-	}
-
-	err = s.mappingRepo.Delete(uint32(port))
+	err := s.mappingRepo.DeleteByHost(c.Request().Context(), c.Param("host"))
 	if err != nil {
 		s.err(c, http.StatusInternalServerError, err)
 		return errors.WithStack(err)
