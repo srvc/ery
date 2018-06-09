@@ -2,13 +2,13 @@ package remote
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/srvc/ery/pkg/domain"
 )
@@ -27,75 +27,64 @@ type mappingRepositoryImpl struct {
 	client  *http.Client
 }
 
-func (m *mappingRepositoryImpl) List() ([]*domain.Mapping, error) {
-	resp, err := m.client.Get(m.baseURL + "/mappings")
+func (m *mappingRepositoryImpl) List(ctx context.Context) ([]*domain.Mapping, error) {
+	req, err := http.NewRequest("GET", m.baseURL+"/mappings", nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
+	}
+
+	resp, err := m.client.Do(req.WithContext(ctx))
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	body := struct {
-		Mappings []struct {
-			IP        net.IP   `json:"ip"`
-			Port      uint32   `json:"prot"`
-			Hostnames []string `json:"hostnames"`
-		} `json:"mappings"`
+		Mappings []*domain.Mapping `json:"mappings"`
 	}{}
 
 	err = json.Unmarshal(data, &body)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
-	mappings := make([]*domain.Mapping, 0, len(body.Mappings))
-	for _, m := range body.Mappings {
-		mappings = append(mappings, &domain.Mapping{
-			Addr: domain.Addr{
-				IP:   m.IP,
-				Port: m.Port,
-			},
-			Hostnames: m.Hostnames,
-		})
-	}
-
-	return mappings, nil
+	return body.Mappings, nil
 }
 
-func (m *mappingRepositoryImpl) GetBySourceHost(host string) (targetHost string, err error) {
-	err = errors.New("remote.MappingRepository.GetBySourceHost() has not been implemented yet")
-	return
+func (m *mappingRepositoryImpl) HasHost(ctx context.Context, host string) (bool, error) {
+	return false, errors.New("remote.MappingRepository.HasHost() has not been implemented yet")
 }
 
-func (m *mappingRepositoryImpl) Create(port uint32, hosts ...string) error {
-	data, err := json.Marshal(struct {
-		Port      uint32   `json:"port"`
-		Hostnames []string `json:"hostnames"`
-	}{
-		Port:      port,
-		Hostnames: hosts,
-	})
+func (m *mappingRepositoryImpl) MapAddr(ctx context.Context, addr domain.Addr) (domain.Addr, error) {
+	return domain.Addr{}, errors.New("remote.MappingRepository.MapAddr() has not been implemented yet")
+}
+
+func (m *mappingRepositoryImpl) Create(ctx context.Context, mapping *domain.Mapping) error {
+	data, err := json.Marshal(mapping)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
-	_, err = m.client.Post(m.baseURL+"/mappings", "application/json", bytes.NewBuffer(data))
-	return err
-}
-
-func (m *mappingRepositoryImpl) Delete(port uint32) error {
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/mappings/%d", m.baseURL, port), nil)
+	req, err := http.NewRequest("POST", m.baseURL+"/mappings", bytes.NewBuffer(data))
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
+	req.Header.Set("Content-Type", "application/json")
 
-	_, err = m.client.Do(req)
-	return err
+	_, err = m.client.Do(req.WithContext(ctx))
+	return errors.WithStack(err)
 }
 
-func (m *mappingRepositoryImpl) DeleteAll() error {
-	return errors.New("remote.MappingRepository.DeleteAll() has not been implemented yet")
+func (m *mappingRepositoryImpl) DeleteByHost(ctx context.Context, host string) error {
+	req, err := http.NewRequest("DELETE", m.baseURL+"/mappings/"+host, nil)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	_, err = m.client.Do(req.WithContext(ctx))
+	return errors.WithStack(err)
 }
