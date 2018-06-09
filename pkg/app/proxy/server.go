@@ -2,13 +2,16 @@ package proxy
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httputil"
+	"strings"
 
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
+
 	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/domain"
-	"go.uber.org/zap"
 )
 
 var (
@@ -62,11 +65,28 @@ func (s *server) Addr() string {
 }
 
 func (s *server) handle(req *http.Request) {
-	host, err := s.mappingRepo.GetBySourceHost(req.Host)
-	if err == nil {
-		req.URL.Host = host
-	} else {
-		req.URL.Host = req.Host
-	}
 	req.URL.Scheme = defaultScheme
+
+	hostAndPort := strings.SplitN(req.Host, ":", 2)
+	addr := domain.HTTPAddr(hostAndPort[0])
+	if len(hostAndPort) == 2 {
+		var err error
+		addr.Port, err = domain.PortFromString(hostAndPort[1])
+		if err != nil {
+			return
+		}
+	}
+
+	outAddr, err := s.mappingRepo.MapAddr(req.Context(), addr)
+	if err != nil {
+		return
+	}
+	if outAddr.Host == "" {
+		outAddr.Host = s.localhost()
+	}
+	req.URL.Host = fmt.Sprintf("%s:%d", outAddr.Host, outAddr.Port)
+}
+
+func (s *server) localhost() string {
+	return "localhost" // FIXME
 }

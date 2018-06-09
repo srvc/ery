@@ -91,8 +91,7 @@ func (s *server) handle(w godns.ResponseWriter, req *godns.Msg) {
 
 func (s *server) handlable(q godns.Question) (ok bool) {
 	if q.Qtype == godns.TypeA && q.Qclass == godns.ClassINET {
-		_, err := s.mappingRepo.GetBySourceHost(strings.TrimSuffix(q.Name, "."))
-		ok = err == nil
+		ok, _ = s.mappingRepo.HasHost(context.TODO(), strings.TrimSuffix(q.Name, "."))
 	}
 	return
 }
