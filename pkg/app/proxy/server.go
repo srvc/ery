@@ -16,15 +16,19 @@ import (
 )
 
 var (
-	defaultAddr   = ":80"
-	defaultScheme = "http"
+	defaultPort   domain.Port = 80
+	defaultScheme             = "http"
 )
 
 // NewServer creates a reverse proxy server instance.
 func NewServer(mappingRepo domain.MappingRepository) app.Server {
+	return newServerWithPort(mappingRepo, defaultPort)
+}
+
+func newServerWithPort(mappingRepo domain.MappingRepository, port domain.Port) app.Server {
 	return &server{
 		mappingRepo: mappingRepo,
-		addr:        defaultAddr,
+		addr:        fmt.Sprintf(":%d", port),
 		log:         zap.L().Named("proxy"),
 	}
 }
@@ -53,7 +57,7 @@ func (s *server) Serve(ctx context.Context) error {
 	case err = <-errCh:
 		err = errors.WithStack(err)
 	case <-ctx.Done():
-		s.log.Debug("shutdowning proxy server...", zap.Error(ctx.Err()))
+		s.log.Debug("shutdowning proxy server...", zap.Error(ctx.Err()), zap.String("addr", s.addr))
 		s.server.Shutdown(context.TODO())
 		err = errors.WithStack(<-errCh)
 	}
