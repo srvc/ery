@@ -14,6 +14,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/srvc/ery/pkg/domain"
 	"github.com/srvc/ery/pkg/ery/di"
 	"github.com/srvc/ery/pkg/util/netutil"
 )
@@ -74,7 +75,7 @@ func runCommand(c di.AppComponent, name string, args []string) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	log.Debug("found free port", zap.Int("port", port))
+	log.Debug("found free port", zap.Uint16("port", uint16(port)))
 
 	eg.Go(func() error {
 		cmd := exec.CommandContext(ctx, name, args...)
@@ -86,26 +87,27 @@ func runCommand(c di.AppComponent, name string, args []string) error {
 		return errors.WithStack(cmd.Run())
 	})
 
-	eg.Go(func() error {
-		data, err := ioutil.ReadFile("localhost")
-		if err != nil {
-			return errors.WithStack(err)
-		}
+	data, err := ioutil.ReadFile("localhost")
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	hosts := strings.Split(strings.TrimSuffix(string(data), "\n"), "\n")
 
-		hostnames := []string{}
-		for _, h := range strings.Split(string(data), "\n") {
-			if h != "" {
-				hostnames = append(hostnames, h)
-			}
+	for _, host := range hosts {
+		m := &domain.Mapping{
+			Host:        host,
+			PortAddrMap: domain.PortAddrMap{80: domain.LocalAddr(port)},
 		}
-		log.Debug("found hostnames", zap.Strings("hostnames", hostnames))
-
-		return errors.WithStack(c.RemoteMappingRepository().Create(uint32(port), hostnames...))
-	})
+		eg.Go(func() error {
+			return errors.WithStack(c.RemoteMappingRepository().Create(ctx, m))
+		})
+	}
 
 	defer func() {
-		err := c.RemoteMappingRepository().Delete(uint32(port))
-		log.Warn("deleting mappings returned error", zap.Int("port", port), zap.Error(err))
+		for _, host := range hosts {
+			err := c.RemoteMappingRepository().DeleteByHost(context.TODO(), host)
+			log.Warn("deleting mappings returned error", zap.Uint16("port", uint16(port)), zap.Error(err))
+		}
 	}()
 
 	return errors.WithStack(eg.Wait())

@@ -100,7 +100,7 @@ func (c *appComponentImpl) DaemonFactory() daemon.Factory {
 
 func (c *appComponentImpl) LocalMappingRepository() domain.MappingRepository {
 	c.initLocalMappingRepoOnce.Do(func() {
-		c.localMappingRepo = local.NewMappingRepository(c.LocalIP())
+		c.localMappingRepo = local.NewMappingRepository()
 	})
 	return c.localMappingRepo
 }

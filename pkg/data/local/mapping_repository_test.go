@@ -1,24 +1,51 @@
 package local
 
 import (
-	"net"
+	"context"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
 	"github.com/srvc/ery/pkg/domain"
-	"github.com/srvc/ery/pkg/util/netutil"
 )
 
 func Test_MappingRepository(t *testing.T) {
 	var (
-		ip                  = net.IPv4(127, 0, 0, 1)
-		port1, port2 uint32 = 8081, 8082
-		host1               = "foo.services.local"
-		host2               = "bar.services.local"
-		host3               = "baz.services.local"
+		m1 = &domain.Mapping{
+			Host: "web1.services.local",
+			PortAddrMap: domain.PortAddrMap{
+				80: domain.LocalAddr(8001),
+			},
+		}
+		m2 = &domain.Mapping{
+			Host: "web2.services.local",
+			PortAddrMap: domain.PortAddrMap{
+				80: domain.LocalAddr(8002),
+			},
+		}
+		m3 = &domain.Mapping{
+			Host: "web3.services.local",
+			PortAddrMap: domain.PortAddrMap{
+				80: domain.LocalAddr(8003),
+			},
+		}
+		m4 = &domain.Mapping{
+			Host: "web3.services.local",
+			PortAddrMap: domain.PortAddrMap{
+				80:   domain.LocalAddr(8003),
+				5432: domain.LocalAddr(8004),
+			},
+		}
 	)
+
+	assertErr := func(t *testing.T, err error) {
+		t.Helper()
+		if err == nil {
+			t.Error("returned nil, want an error")
+		}
+	}
 
 	assertNoErr := func(t *testing.T, err error) {
 		t.Helper()
@@ -27,60 +54,67 @@ func Test_MappingRepository(t *testing.T) {
 		}
 	}
 
-	assertFound := func(t *testing.T, m domain.MappingRepository, inputHost string, wantPort uint32) {
+	assertFound := func(t *testing.T, m domain.MappingRepository, in, want domain.Addr) {
 		t.Helper()
-		gotHost, err := m.GetBySourceHost(inputHost)
+		got, err := m.MapAddr(context.TODO(), in)
 		assertNoErr(t, err)
-		if got, want := gotHost, netutil.HostAndPort(ip.String(), wantPort); got != want {
-			t.Errorf("Lookup(%q) returned %q, want %q", inputHost, got, want)
+		if got != want {
+			t.Errorf("MapAddr(%v) returned %v, want %v", in, got, want)
 		}
 	}
 
-	assertNotFound := func(t *testing.T, m domain.MappingRepository, inputHost string) {
+	assertNotFound := func(t *testing.T, m domain.MappingRepository, in domain.Addr) {
 		t.Helper()
-		gotHost, err := m.GetBySourceHost(inputHost)
-		assertNoErr(t, err)
-		if got, want := gotHost, ""; got != want {
-			t.Errorf("Lookup(%q) returned %q, want %q", inputHost, got, want)
-		}
+		_, err := m.MapAddr(context.TODO(), in)
+		assertErr(t, err)
 	}
 
-	repo := NewMappingRepository(ip)
+	repo := NewMappingRepository()
 
 	// Test Add
-	assertNoErr(t, repo.Create(port1, host1))
-	assertFound(t, repo, host1, port1)
-	assertNotFound(t, repo, host2)
-	assertNotFound(t, repo, host3)
+	assertNoErr(t, repo.Create(context.TODO(), m1))
+	assertFound(t, repo, domain.HTTPAddr(m1.Host), m1.Map(80))
+	assertNotFound(t, repo, domain.NewAddr(m1.Host, 8000))
+	assertNotFound(t, repo, domain.HTTPAddr(m2.Host))
 
-	assertNoErr(t, repo.Create(port2, host2))
-	assertFound(t, repo, host2, port2)
+	has, err := repo.HasHost(context.TODO(), m1.Host)
+	assertNoErr(t, err)
+	if got, want := has, true; got != want {
+		t.Errorf("HasHost(%q) returned %t, want %t", m1.Host, got, want)
+	}
+	has, err = repo.HasHost(context.TODO(), m2.Host)
+	assertNoErr(t, err)
+	if got, want := has, false; got != want {
+		t.Errorf("HasHost(%q) returned %t, want %t", m2.Host, got, want)
+	}
 
-	assertNoErr(t, repo.Create(port1, host3))
-	assertFound(t, repo, host1, port1)
-	assertFound(t, repo, host3, port1)
+	assertNoErr(t, repo.Create(context.TODO(), m2))
+	assertFound(t, repo, domain.HTTPAddr(m2.Host), m2.Map(80))
+	assertNoErr(t, repo.Create(context.TODO(), m3))
+	assertFound(t, repo, domain.HTTPAddr(m3.Host), m3.Map(80))
+
+	// Test Failed to create
+	assertErr(t, repo.Create(context.TODO(), m4))
+	assertFound(t, repo, domain.HTTPAddr(m3.Host), m3.Map(80))
 
 	// Test List
-	got, err := repo.List()
+	got, err := repo.List(context.TODO())
 	assertNoErr(t, err)
-	want := []*domain.Mapping{
-		{Addr: domain.Addr{IP: ip, Port: port1}, Hostnames: []string{host1, host3}},
-		{Addr: domain.Addr{IP: ip, Port: port2}, Hostnames: []string{host2}},
-	}
+	want := []*domain.Mapping{m1, m2, m3}
 	diffOpts := []cmp.Option{
-		cmpopts.SortSlices(func(m1, m2 *domain.Mapping) bool { return m1.Port < m2.Port }),
+		cmpopts.SortSlices(func(m1, m2 *domain.Mapping) bool { return strings.Compare(m1.Host, m2.Host) < 0 }),
 	}
 	if diff := cmp.Diff(got, want, diffOpts...); diff != "" {
 		t.Errorf("Returned list differs: (-got +want)\n%s", diff)
 	}
 
 	// Test Remove
-	assertNoErr(t, repo.Delete(port1))
-	assertFound(t, repo, host2, port2)
-	assertNotFound(t, repo, host1)
-	assertNotFound(t, repo, host3)
+	assertNoErr(t, repo.DeleteByHost(context.TODO(), m3.Host))
+	assertFound(t, repo, domain.HTTPAddr(m1.Host), m1.Map(80))
+	assertNotFound(t, repo, domain.HTTPAddr(m3.Host))
 
-	// Test Clear
-	assertNoErr(t, repo.DeleteAll())
-	assertNotFound(t, repo, host2)
+	// Test multiple values
+	assertNoErr(t, repo.Create(context.TODO(), m4))
+	assertFound(t, repo, domain.HTTPAddr(m4.Host), m4.Map(80))
+	assertFound(t, repo, domain.NewAddr(m4.Host, 5432), m4.Map(5432))
 }
