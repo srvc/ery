@@ -11,6 +11,7 @@ import (
 
 	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/domain"
+	"github.com/srvc/ery/pkg/util/netutil"
 )
 
 var (
@@ -20,10 +21,9 @@ var (
 )
 
 // NewServer creates a DNS server instance.
-func NewServer(mappingRepo domain.MappingRepository, localhost net.IP) app.Server {
+func NewServer(mappingRepo domain.MappingRepository) app.Server {
 	return &server{
 		mappingRepo: mappingRepo,
-		localhost:   localhost,
 		addr:        defaultAddr,
 		log:         zap.L().Named("dns"),
 	}
@@ -32,7 +32,6 @@ func NewServer(mappingRepo domain.MappingRepository, localhost net.IP) app.Serve
 type server struct {
 	mappingRepo domain.MappingRepository
 	server      *godns.Server
-	localhost   net.IP
 	addr        string
 	log         *zap.Logger
 }
@@ -80,7 +79,7 @@ func (s *server) handle(w godns.ResponseWriter, req *godns.Msg) {
 				Class:  godns.ClassINET,
 				Ttl:    defaultTTL,
 			},
-			A: s.localhost,
+			A: s.localhost(),
 		})
 	} else {
 		resp.MsgHdr.Rcode = godns.RcodeNameError
@@ -94,4 +93,8 @@ func (s *server) handlable(q godns.Question) (ok bool) {
 		ok, _ = s.mappingRepo.HasHost(context.TODO(), strings.TrimSuffix(q.Name, "."))
 	}
 	return
+}
+
+func (s *server) localhost() net.IP {
+	return netutil.LocalIP() // FIXME
 }
