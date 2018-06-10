@@ -20,8 +20,7 @@ var (
 	defaultScheme             = "http"
 )
 
-// NewServer creates a reverse proxy server instance.
-func NewServer(mappingRepo domain.MappingRepository) app.Server {
+func newServer(mappingRepo domain.MappingRepository) app.Server {
 	return newServerWithPort(mappingRepo, defaultPort)
 }
 
