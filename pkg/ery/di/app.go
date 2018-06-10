@@ -1,7 +1,6 @@
 package di
 
 import (
-	"net"
 	"sync"
 
 	"github.com/srvc/ery/pkg/app"
@@ -13,14 +12,12 @@ import (
 	"github.com/srvc/ery/pkg/data/remote"
 	"github.com/srvc/ery/pkg/domain"
 	"github.com/srvc/ery/pkg/ery"
-	"github.com/srvc/ery/pkg/util/netutil"
 )
 
 // AppComponent is an interface to provide accessors for dependencies.
 type AppComponent interface {
 	// cli context
 	Config() *ery.Config
-	LocalIP() net.IP
 
 	// domain
 	LocalMappingRepository() domain.MappingRepository
@@ -43,9 +40,6 @@ func NewAppComponent(cfg *ery.Config) AppComponent {
 type appComponentImpl struct {
 	config *ery.Config
 
-	localIP         net.IP
-	initLocalIPOnce sync.Once
-
 	apiServer, dnsServer, proxyServer                         app.Server
 	initAPIServerOnce, initDNSServerOnce, initProxyServerOnce sync.Once
 
@@ -62,13 +56,6 @@ func (c *appComponentImpl) Config() *ery.Config {
 	return c.config
 }
 
-func (c *appComponentImpl) LocalIP() net.IP {
-	c.initLocalIPOnce.Do(func() {
-		c.localIP = netutil.LocalhostIP()
-	})
-	return c.localIP
-}
-
 func (c *appComponentImpl) APIServer() app.Server {
 	c.initAPIServerOnce.Do(func() {
 		c.apiServer = api.NewServer(c.LocalMappingRepository(), c.Config().API.Hostname)
@@ -78,7 +65,7 @@ func (c *appComponentImpl) APIServer() app.Server {
 
 func (c *appComponentImpl) DNSServer() app.Server {
 	c.initDNSServerOnce.Do(func() {
-		c.dnsServer = dns.NewServer(c.LocalMappingRepository(), c.LocalIP())
+		c.dnsServer = dns.NewServer(c.LocalMappingRepository())
 	})
 	return c.dnsServer
 }

@@ -12,6 +12,7 @@ import (
 
 	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/domain"
+	"github.com/srvc/ery/pkg/util/netutil"
 )
 
 var (
@@ -88,5 +89,5 @@ func (s *server) handle(req *http.Request) {
 }
 
 func (s *server) localhost() string {
-	return "localhost" // FIXME
+	return netutil.LocalIP().String() // FIXME
 }
