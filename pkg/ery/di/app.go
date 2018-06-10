@@ -5,6 +5,7 @@ import (
 
 	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/app/api"
+	"github.com/srvc/ery/pkg/app/container"
 	"github.com/srvc/ery/pkg/app/daemon"
 	"github.com/srvc/ery/pkg/app/dns"
 	"github.com/srvc/ery/pkg/app/proxy"
@@ -27,6 +28,7 @@ type AppComponent interface {
 	APIServer() app.Server
 	DNSServer() app.Server
 	ProxyServer() app.Server
+	ContainerWatcher() app.Watcher
 	DaemonFactory() daemon.Factory
 }
 
@@ -43,13 +45,18 @@ type appComponentImpl struct {
 	apiServer, dnsServer, proxyServer                         app.Server
 	initAPIServerOnce, initDNSServerOnce, initProxyServerOnce sync.Once
 
+	containerWatcher         app.Watcher
+	initContainerWatcherOnce sync.Once
+
 	daemonFactory         daemon.Factory
 	initDaemonFactoryOnce sync.Once
 
-	localMappingRepo          domain.MappingRepository
-	initLocalMappingRepoOnce  sync.Once
-	remoteMappingRepo         domain.MappingRepository
-	initRemoteMappingRepoOnce sync.Once
+	localMappingRepo                 domain.MappingRepository
+	initLocalMappingRepoOnce         sync.Once
+	remoteMappingRepo                domain.MappingRepository
+	initRemoteMappingRepoOnce        sync.Once
+	localDockerContainerRepo         domain.ContainerRepository
+	initLocalDockerContainerRepoOnce sync.Once
 }
 
 func (c *appComponentImpl) Config() *ery.Config {
@@ -77,6 +84,20 @@ func (c *appComponentImpl) ProxyServer() app.Server {
 	return c.proxyServer
 }
 
+func (c *appComponentImpl) ContainerWatcher() app.Watcher {
+	c.initContainerWatcherOnce.Do(func() {
+		c.containerWatcher = container.NewWatcher(
+			c.LocalMappingRepository(),
+			[]domain.ContainerRepository{
+				c.LocalDockerContainerRepository(),
+			},
+			c.Config().TLD,
+			c.Config().Package+".hostname",
+		)
+	})
+	return c.containerWatcher
+}
+
 func (c *appComponentImpl) DaemonFactory() daemon.Factory {
 	c.initDaemonFactoryOnce.Do(func() {
 		cfg := c.Config().Daemon
@@ -97,4 +118,11 @@ func (c *appComponentImpl) RemoteMappingRepository() domain.MappingRepository {
 		c.remoteMappingRepo = remote.NewMappingRepository("http://" + c.Config().API.Hostname)
 	})
 	return c.remoteMappingRepo
+}
+
+func (c *appComponentImpl) LocalDockerContainerRepository() domain.ContainerRepository {
+	c.initLocalDockerContainerRepoOnce.Do(func() {
+		c.localDockerContainerRepo = local.NewDockerContainerRepository()
+	})
+	return c.localDockerContainerRepo
 }

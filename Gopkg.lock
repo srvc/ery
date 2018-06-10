@@ -2,10 +2,63 @@
 
 
 [[projects]]
+  name = "github.com/Microsoft/go-winio"
+  packages = ["."]
+  revision = "7da180ee92d8bd8bb8c37fc560e673e6557c392f"
+  version = "v0.4.7"
+
+[[projects]]
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
   revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
   version = "v3.2.0"
+
+[[projects]]
+  name = "github.com/docker/distribution"
+  packages = [
+    "digest",
+    "reference"
+  ]
+  revision = "48294d928ced5dd9b378f7fd7c6f5da3ff3f2c89"
+  version = "v2.6.2"
+
+[[projects]]
+  name = "github.com/docker/docker"
+  packages = [
+    "api/types",
+    "api/types/blkiodev",
+    "api/types/container",
+    "api/types/events",
+    "api/types/filters",
+    "api/types/mount",
+    "api/types/network",
+    "api/types/reference",
+    "api/types/registry",
+    "api/types/strslice",
+    "api/types/swarm",
+    "api/types/time",
+    "api/types/versions",
+    "api/types/volume",
+    "pkg/tlsconfig"
+  ]
+  revision = "eef6495eddab52828327aade186443681ed71a4e"
+  version = "v17.03.2-ce-rc1"
+
+[[projects]]
+  name = "github.com/docker/go-connections"
+  packages = [
+    "nat",
+    "sockets",
+    "tlsconfig"
+  ]
+  revision = "3ede32e2033de7505e6500d6c868c2b9ed9f169d"
+  version = "v0.3.0"
+
+[[projects]]
+  name = "github.com/docker/go-units"
+  packages = ["."]
+  revision = "47565b4f722fb6ceae66b95f853feed578a4a51c"
+  version = "v0.3.3"
 
 [[projects]]
   name = "github.com/google/go-cmp"
@@ -62,6 +115,12 @@
   packages = ["."]
   revision = "e57bf427e68187a27e22adceac868350d7a7079b"
   version = "v1.0.7"
+
+[[projects]]
+  name = "github.com/moby/moby"
+  packages = ["client"]
+  revision = "eef6495eddab52828327aade186443681ed71a4e"
+  version = "v17.03.2-ce-rc1"
 
 [[projects]]
   name = "github.com/pkg/errors"
@@ -141,10 +200,13 @@
   packages = [
     "bpf",
     "context",
+    "context/ctxhttp",
     "internal/iana",
     "internal/socket",
+    "internal/socks",
     "ipv4",
-    "ipv6"
+    "ipv6",
+    "proxy"
   ]
   revision = "8d282c4e200f6234d5df69ac4ad1ecb709c3df2c"
 
@@ -169,6 +231,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "72860a0e6c793cb10e240111e035c4f473f99a2917eaf07cd1ded12a6949f37b"
+  inputs-digest = "0605067e0e316e4bd15c3261b3b1b7824ea826120bd0db40635c506c8a3ada75"
   solver-name = "gps-cdcl"
   solver-version = 1

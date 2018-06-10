@@ -41,6 +41,10 @@ func runStartCommand(c di.AppComponent) error {
 		eg.Go(func() error { return errors.WithStack(s.Serve(ctx)) })
 	}
 
+	eg.Go(func() error {
+		return errors.WithStack(c.ContainerWatcher().Watch(ctx))
+	})
+
 	// Observe os signals
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt)
