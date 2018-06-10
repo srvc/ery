@@ -61,10 +61,6 @@ func (s *server) Serve(ctx context.Context) error {
 	return errors.WithStack(err)
 }
 
-func (s *server) Addr() string {
-	return s.server.Addr
-}
-
 func (s *server) handle(req *http.Request) {
 	req.URL.Scheme = defaultScheme
 

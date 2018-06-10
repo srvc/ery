@@ -62,10 +62,6 @@ func (s *server) Serve(ctx context.Context) error {
 	return errors.WithStack(err)
 }
 
-func (s *server) Addr() string {
-	return s.server.Addr
-}
-
 func (s *server) handle(w godns.ResponseWriter, req *godns.Msg) {
 	q := req.Question[0]
 	resp := new(godns.Msg)

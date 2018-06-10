@@ -69,10 +69,6 @@ func (s *server) Serve(ctx context.Context) error {
 	return errors.WithStack(err)
 }
 
-func (s *server) Addr() string {
-	return s.server.Addr
-}
-
 func (s *server) err(c echo.Context, code int, err error) {
 	c.JSON(code, struct {
 		Error string `json:"error"`
