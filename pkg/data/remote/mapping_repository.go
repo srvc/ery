@@ -88,3 +88,10 @@ func (m *mappingRepositoryImpl) DeleteByHost(ctx context.Context, host string) e
 	_, err = m.client.Do(req.WithContext(ctx))
 	return errors.WithStack(err)
 }
+
+func (m *mappingRepositoryImpl) ListenEvent(ctx context.Context) (<-chan domain.MappingEvent, <-chan error) {
+	evCh := make(chan domain.MappingEvent)
+	errCh := make(chan error, 1)
+	errCh <- errors.New("remote.MappingRepository.HasHost() has not been implemented yet")
+	return evCh, errCh
+}

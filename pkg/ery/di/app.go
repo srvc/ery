@@ -79,7 +79,8 @@ func (c *appComponentImpl) DNSServer() app.Server {
 
 func (c *appComponentImpl) ProxyServer() app.Server {
 	c.initProxyServerOnce.Do(func() {
-		c.proxyServer = proxy.NewServer(c.LocalMappingRepository())
+		mappingRepo := c.LocalMappingRepository()
+		c.proxyServer = proxy.NewManager(mappingRepo, proxy.NewFactory(mappingRepo))
 	})
 	return c.proxyServer
 }

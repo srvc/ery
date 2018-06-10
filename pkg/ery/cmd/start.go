@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -28,9 +29,9 @@ func newCmdStart(c di.AppComponent) *cobra.Command {
 
 func runStartCommand(c di.AppComponent) error {
 	svrs := []app.Server{
-		c.APIServer(),
-		c.DNSServer(),
 		c.ProxyServer(),
+		c.DNSServer(),
+		c.APIServer(),
 	}
 
 	cctx, cancel := context.WithCancel(context.Background())
@@ -38,6 +39,7 @@ func runStartCommand(c di.AppComponent) error {
 
 	for _, s := range svrs {
 		s := s
+		time.Sleep(30 * time.Millisecond) // wait for starting proxy server manager
 		eg.Go(func() error { return errors.WithStack(s.Serve(ctx)) })
 	}
 
