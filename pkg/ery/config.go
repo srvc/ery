@@ -10,6 +10,9 @@ type Config struct {
 	Version, Revision      string
 	BuildDate, ReleaseType string
 
+	TLD     string
+	Package string
+
 	API    APIConfig
 	Daemon DaemonConfig
 }

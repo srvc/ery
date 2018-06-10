@@ -39,6 +39,9 @@ func createConfig() *ery.Config {
 		BuildDate:   buildDate,
 		ReleaseType: releaseType,
 
+		TLD:     "ery",
+		Package: "tools.srvc.ery",
+
 		API: ery.APIConfig{
 			Hostname: "api.ery.local",
 		},
