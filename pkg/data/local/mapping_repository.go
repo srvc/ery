@@ -11,10 +11,11 @@ import (
 )
 
 // NewMappingRepository creates a new MappingRepository instance that can access local data.
-func NewMappingRepository() domain.MappingRepository {
+func NewMappingRepository(defaultPort domain.Port) domain.MappingRepository {
 	return &mappingRepositoryImpl{
 		mappingByHost: new(sync.Map),
 		eventEmitters: new(sync.Map),
+		defaultPort:   defaultPort,
 	}
 }
 
@@ -22,6 +23,7 @@ type mappingRepositoryImpl struct {
 	mappingByHost     *sync.Map
 	eventEmitters     *sync.Map
 	eventEmitterIDSeq uint64
+	defaultPort       domain.Port
 }
 
 func (r *mappingRepositoryImpl) List(ctx context.Context) ([]*domain.Mapping, error) {
@@ -56,6 +58,11 @@ func (r *mappingRepositoryImpl) MapAddr(ctx context.Context, addr domain.Addr) (
 func (r *mappingRepositoryImpl) Create(ctx context.Context, m *domain.Mapping) error {
 	if _, ok := r.mappingByHost.Load(m.Host); ok {
 		return errors.Errorf("%v has already been registered", m.Host)
+	}
+
+	if addr, ok := m.PortAddrMap[0]; ok {
+		m.PortAddrMap[r.defaultPort] = addr
+		delete(m.PortAddrMap, 0)
 	}
 
 	r.mappingByHost.Store(m.Host, m)

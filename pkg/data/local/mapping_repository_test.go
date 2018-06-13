@@ -22,7 +22,7 @@ func Test_MappingRepository(t *testing.T) {
 		m2 = &domain.Mapping{
 			Host: "web2.services.local",
 			PortAddrMap: domain.PortAddrMap{
-				80: domain.LocalAddr(8002),
+				0: domain.LocalAddr(8002),
 			},
 		}
 		m3 = &domain.Mapping{
@@ -69,27 +69,30 @@ func Test_MappingRepository(t *testing.T) {
 		assertErr(t, err)
 	}
 
-	repo := NewMappingRepository()
+	defaultPort := domain.Port(3000)
+	repo := NewMappingRepository(defaultPort)
 
 	// Test Add
 	assertNoErr(t, repo.Create(context.TODO(), m1))
 	assertFound(t, repo, domain.HTTPAddr(m1.Host), m1.Map(80))
 	assertNotFound(t, repo, domain.NewAddr(m1.Host, 8000))
-	assertNotFound(t, repo, domain.HTTPAddr(m2.Host))
+	assertNotFound(t, repo, domain.HTTPAddr(m3.Host))
 
 	has, err := repo.HasHost(context.TODO(), m1.Host)
 	assertNoErr(t, err)
 	if got, want := has, true; got != want {
 		t.Errorf("HasHost(%q) returned %t, want %t", m1.Host, got, want)
 	}
-	has, err = repo.HasHost(context.TODO(), m2.Host)
+	has, err = repo.HasHost(context.TODO(), m3.Host)
 	assertNoErr(t, err)
 	if got, want := has, false; got != want {
-		t.Errorf("HasHost(%q) returned %t, want %t", m2.Host, got, want)
+		t.Errorf("HasHost(%q) returned %t, want %t", m3.Host, got, want)
 	}
 
+	// Test Use default port when the specified port is 0
 	assertNoErr(t, repo.Create(context.TODO(), m2))
-	assertFound(t, repo, domain.HTTPAddr(m2.Host), m2.Map(80))
+	assertFound(t, repo, domain.NewAddr(m2.Host, defaultPort), m2.Map(defaultPort))
+
 	assertNoErr(t, repo.Create(context.TODO(), m3))
 	assertFound(t, repo, domain.HTTPAddr(m3.Host), m3.Map(80))
 
