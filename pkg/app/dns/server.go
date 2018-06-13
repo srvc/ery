@@ -2,6 +2,7 @@ package dns
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"strings"
 
@@ -17,14 +18,13 @@ import (
 var (
 	defaultTTL     uint32 = 60
 	defaultNetwork        = "udp"
-	defaultAddr           = ":53"
 )
 
 // NewServer creates a DNS server instance.
-func NewServer(mappingRepo domain.MappingRepository) app.Server {
+func NewServer(mappingRepo domain.MappingRepository, port domain.Port) app.Server {
 	return &server{
 		mappingRepo: mappingRepo,
-		addr:        defaultAddr,
+		addr:        fmt.Sprintf(":%d", port),
 		log:         zap.L().Named("dns"),
 	}
 }
