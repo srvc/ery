@@ -72,7 +72,7 @@ func (c *appComponentImpl) APIServer() app.Server {
 
 func (c *appComponentImpl) DNSServer() app.Server {
 	c.initDNSServerOnce.Do(func() {
-		c.dnsServer = dns.NewServer(c.LocalMappingRepository())
+		c.dnsServer = dns.NewServer(c.LocalMappingRepository(), domain.Port(c.Config().DNS.Port))
 	})
 	return c.dnsServer
 }
@@ -109,7 +109,7 @@ func (c *appComponentImpl) DaemonFactory() daemon.Factory {
 
 func (c *appComponentImpl) LocalMappingRepository() domain.MappingRepository {
 	c.initLocalMappingRepoOnce.Do(func() {
-		c.localMappingRepo = local.NewMappingRepository()
+		c.localMappingRepo = local.NewMappingRepository(domain.Port(c.Config().Proxy.DefaultPort))
 	})
 	return c.localMappingRepo
 }
