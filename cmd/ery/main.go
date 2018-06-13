@@ -42,11 +42,14 @@ func createConfig() *ery.Config {
 		TLD:     "ery",
 		Package: "tools.srvc.ery",
 
-		API: ery.APIConfig{
+		DNS:   &ery.DNSConfig{},
+		Proxy: &ery.ProxyConfig{},
+
+		API: &ery.APIConfig{
 			Hostname: "api.ery.local",
 		},
 
-		Daemon: ery.DaemonConfig{
+		Daemon: &ery.DaemonConfig{
 			Name:        "ery",
 			Description: "Discover services in local",
 		},
