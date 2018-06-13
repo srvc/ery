@@ -16,13 +16,8 @@ import (
 )
 
 var (
-	defaultPort   domain.Port = 80
-	defaultScheme             = "http"
+	defaultScheme = "http"
 )
-
-func newServer(mappingRepo domain.MappingRepository) app.Server {
-	return newServerWithPort(mappingRepo, defaultPort)
-}
 
 func newServerWithPort(mappingRepo domain.MappingRepository, port domain.Port) app.Server {
 	return &server{
