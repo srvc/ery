@@ -40,7 +40,7 @@ func (s *server) Serve(ctx context.Context) error {
 	err = s.mappingRepo.Create(ctx, &domain.Mapping{
 		Host: s.hostname,
 		PortAddrMap: domain.PortAddrMap{
-			80: domain.LocalAddr(domain.Port(addr.(*net.TCPAddr).Port)),
+			0: domain.LocalAddr(domain.Port(addr.(*net.TCPAddr).Port)),
 		},
 	})
 	if err != nil {

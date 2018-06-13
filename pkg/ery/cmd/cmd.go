@@ -96,7 +96,7 @@ func runCommand(c di.AppComponent, name string, args []string) error {
 	for _, host := range hosts {
 		m := &domain.Mapping{
 			Host:        host,
-			PortAddrMap: domain.PortAddrMap{80: domain.LocalAddr(port)},
+			PortAddrMap: domain.PortAddrMap{0: domain.LocalAddr(port)},
 		}
 		eg.Go(func() error {
 			return errors.WithStack(c.RemoteMappingRepository().Create(ctx, m))
