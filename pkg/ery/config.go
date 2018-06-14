@@ -13,13 +13,25 @@ type Config struct {
 	TLD     string
 	Package string
 
-	API    APIConfig
-	Daemon DaemonConfig
+	API    *APIConfig
+	DNS    *DNSConfig
+	Proxy  *ProxyConfig
+	Daemon *DaemonConfig
 }
 
 // APIConfig is a configuration object concerning in the API server.
 type APIConfig struct {
 	Hostname string
+}
+
+// DNSConfig is a configuration object concerning in the DNS server.
+type DNSConfig struct {
+	Port uint16
+}
+
+// ProxyConfig is a configuration object concerning in the Proxy server.
+type ProxyConfig struct {
+	DefaultPort uint16
 }
 
 // DaemonConfig is a configuration object concerning in daemon.
