@@ -20,6 +20,7 @@ func newCmdStart(c di.AppComponent) *cobra.Command {
 		Use:   "start",
 		Short: "Start ery server",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.SilenceUsage = true
 			return errors.WithStack(runStartCommand(c))
 		},
 	}
@@ -65,5 +66,11 @@ func runStartCommand(c di.AppComponent) error {
 	signal.Stop(sigCh)
 	close(sigCh)
 
-	return errors.WithStack(eg.Wait())
+	err := errors.WithStack(eg.Wait())
+
+	if errors.Cause(err) == context.Canceled {
+		return nil
+	}
+
+	return err
 }
