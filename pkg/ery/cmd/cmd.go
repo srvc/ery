@@ -39,6 +39,7 @@ func NewEryCommand(c di.AppComponent) *cobra.Command {
 	cmd.AddCommand(
 		newCmdDaemon(c),
 		newCmdStart(c),
+		newCmdPS(c),
 		newCmdVersion(c),
 	)
 
