@@ -35,6 +35,8 @@ func NewEryCommand(c di.AppComponent) *cobra.Command {
 	}
 
 	cmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Verbose lovel output")
+	cmd.PersistentFlags().Uint16Var(&c.Config().DNS.Port, "dns-port", 53, "DNS server runs on the specified port")
+	cmd.PersistentFlags().Uint16Var(&c.Config().Proxy.DefaultPort, "proxy-port", 80, "Proxy server runs on the specified port in default")
 
 	cmd.AddCommand(
 		newCmdDaemon(c),

@@ -1,7 +1,13 @@
 package di
 
 import (
+	"context"
+	"fmt"
+	"net"
+	"net/http"
+	"net/url"
 	"sync"
+	"time"
 
 	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/app/api"
@@ -57,6 +63,9 @@ type appComponentImpl struct {
 	initRemoteMappingRepoOnce        sync.Once
 	localDockerContainerRepo         domain.ContainerRepository
 	initLocalDockerContainerRepoOnce sync.Once
+
+	httpClient     *http.Client
+	initHTTPClient sync.Once
 }
 
 func (c *appComponentImpl) Config() *ery.Config {
@@ -116,7 +125,8 @@ func (c *appComponentImpl) LocalMappingRepository() domain.MappingRepository {
 
 func (c *appComponentImpl) RemoteMappingRepository() domain.MappingRepository {
 	c.initRemoteMappingRepoOnce.Do(func() {
-		c.remoteMappingRepo = remote.NewMappingRepository("http://" + c.Config().API.Hostname)
+		url := &url.URL{Scheme: "http", Host: fmt.Sprintf("%s:%d", c.Config().API.Hostname, c.Config().Proxy.DefaultPort)}
+		c.remoteMappingRepo = remote.NewMappingRepository(url, c.HTTPClient())
 	})
 	return c.remoteMappingRepo
 }
@@ -126,4 +136,29 @@ func (c *appComponentImpl) LocalDockerContainerRepository() domain.ContainerRepo
 		c.localDockerContainerRepo = local.NewDockerContainerRepository()
 	})
 	return c.localDockerContainerRepo
+}
+
+func (c *appComponentImpl) HTTPClient() *http.Client {
+	c.initHTTPClient.Do(func() {
+		dialerFunc := func(ctx context.Context, network, address string) (net.Conn, error) {
+			d := net.Dialer{}
+			return d.DialContext(ctx, "udp", fmt.Sprintf(":%d", c.Config().DNS.Port))
+		}
+
+		resolver := &net.Resolver{PreferGo: true, Dial: dialerFunc}
+		dialer := net.Dialer{Resolver: resolver}
+
+		transport := &http.Transport{
+			Proxy:                 http.ProxyFromEnvironment,
+			Dial:                  dialer.Dial,
+			DialContext:           dialer.DialContext,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+		}
+
+		c.httpClient = &http.Client{Transport: transport}
+	})
+	return c.httpClient
 }
