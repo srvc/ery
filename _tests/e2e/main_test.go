@@ -91,14 +91,14 @@ func TestEry(t *testing.T) {
 		}
 	}
 
-	time.Sleep(2 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	checkCmd(t, ery.Command(ctx, "ps"))
 
 	t.Run("local http server", func(t *testing.T) {
 		defer startServerOnLocal(t, "local")()
 
-		time.Sleep(2 * time.Second)
+		time.Sleep(5 * time.Second)
 
 		cli := ery.HTTPClient()
 
@@ -119,7 +119,7 @@ func TestEry(t *testing.T) {
 	t.Run("docker http server", func(t *testing.T) {
 		defer startServerOnDocker(t, "docker")()
 
-		time.Sleep(2 * time.Second)
+		time.Sleep(5 * time.Second)
 
 		cli := ery.HTTPClient()
 
@@ -137,7 +137,7 @@ func TestEry(t *testing.T) {
 		}
 	})
 
-	time.Sleep(2 * time.Second)
+	time.Sleep(5 * time.Second)
 }
 
 func checkCmd(t *testing.T, cmd *exec.Cmd) {
