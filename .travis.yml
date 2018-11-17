@@ -36,6 +36,19 @@ jobs:
   - <<: *test
     go: '1.10'
 
+  - &test-e2e
+    <<: *test
+    name: "E2E test (go 1.11)"
+    sudo: required
+    services:
+    - docker
+    script: make test-e2e
+    if: type != 'pull_request'
+
+  # - <<: *test-e2e
+  #   go: '1.10'
+  #   name: "E2E test (go 1.10)"
+
   - stage: deploy
     install: make setup
     script: make packages -j4

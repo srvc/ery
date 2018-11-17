@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
 	"time"
 
@@ -35,6 +37,8 @@ func NewEryCommand(c di.AppComponent) *cobra.Command {
 	}
 
 	cmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Verbose lovel output")
+	cmd.PersistentFlags().Uint16Var(&c.Config().DNS.Port, "dns-port", 53, "DNS server runs on the specified port")
+	cmd.PersistentFlags().Uint16Var(&c.Config().Proxy.DefaultPort, "proxy-port", 80, "Proxy server runs on the specified port in default")
 
 	cmd.AddCommand(
 		newCmdDaemon(c),
@@ -71,7 +75,8 @@ func setupLogger(verbose bool) {
 
 func runCommand(c di.AppComponent, name string, args []string) error {
 	log := zap.L().Named("exec")
-	eg, ctx := errgroup.WithContext(context.Background())
+	cctx, cancel := context.WithCancel(context.Background())
+	eg, ctx := errgroup.WithContext(cctx)
 
 	port, err := netutil.GetFreePort()
 	if err != nil {
@@ -84,7 +89,7 @@ func runCommand(c di.AppComponent, name string, args []string) error {
 		cmd.Stdin = c.Config().InReader
 		cmd.Stdout = c.Config().OutWriter
 		cmd.Stderr = c.Config().ErrWriter
-		cmd.Env = append(cmd.Env, fmt.Sprintf("PORT=%d", port))
+		cmd.Env = append(os.Environ(), fmt.Sprintf("PORT=%d", port))
 		log.Debug("execute command", zap.String("name", name), zap.Strings("args", args))
 		return errors.WithStack(cmd.Run())
 	})
@@ -105,12 +110,33 @@ func runCommand(c di.AppComponent, name string, args []string) error {
 		})
 	}
 
-	defer func() {
-		for _, host := range hosts {
-			err := c.RemoteMappingRepository().DeleteByHost(context.TODO(), host)
-			log.Warn("deleting mappings returned error", zap.Uint16("port", uint16(port)), zap.Error(err))
-		}
-	}()
+	// Observe os signals
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt)
 
-	return errors.WithStack(eg.Wait())
+	select {
+	case sig := <-sigCh:
+		zap.L().Debug("received signal", zap.Stringer("signal", sig))
+		cancel()
+	case <-ctx.Done():
+		// do nothing
+	}
+
+	signal.Stop(sigCh)
+	close(sigCh)
+
+	fmt.Println(hosts)
+
+	for _, host := range hosts {
+		err := c.RemoteMappingRepository().DeleteByHost(context.TODO(), host)
+		log.Warn("deleting mappings returned error", zap.Uint16("port", uint16(port)), zap.Error(err))
+	}
+
+	err = errors.WithStack(eg.Wait())
+
+	if errors.Cause(err) == context.Canceled {
+		return nil
+	}
+
+	return errors.WithStack(err)
 }

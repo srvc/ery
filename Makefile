@@ -7,7 +7,7 @@ REVISION ?= $(shell git describe --always)
 BUILD_DATE ?= $(shell date +'%Y-%m-%dT%H:%M:%SZ')
 
 GO_BUILD_FLAGS := -v
-GO_TEST_FLAGS := -v -timeout 2m
+GO_TEST_FLAGS := -v -timeout 3m
 GO_COVER_FLAGS := -coverprofile coverage.txt -covermode atomic
 SRC_FILES := $(shell go list -f '{{range .GoFiles}}{{printf "%s/%s\n" $$.Dir .}}{{end}}' ./...)
 
@@ -87,3 +87,7 @@ test:
 .PHONY: cover
 cover:
 	go test $(GO_TEST_FLAGS) $(GO_COVER_FLAGS) ./...
+
+.PHONY: test-e2e
+test-e2e: $(BIN_DIR)/ery
+	go test $(GO_TEST_FLAGS) ./_tests/e2e

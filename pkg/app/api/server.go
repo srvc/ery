@@ -53,7 +53,7 @@ func (s *server) Serve(ctx context.Context) error {
 
 	errCh := make(chan error, 1)
 	go func() {
-		s.log.Debug("starting DNS server...", zap.Stringer("addr", addr), zap.String("hostname", s.hostname))
+		s.log.Debug("starting API server...", zap.Stringer("addr", addr), zap.String("hostname", s.hostname))
 		errCh <- errors.WithStack(s.server.Serve(lis))
 	}()
 

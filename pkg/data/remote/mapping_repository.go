@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"strings"
+	"net/url"
 
 	"github.com/pkg/errors"
 
@@ -14,21 +14,21 @@ import (
 )
 
 // NewMappingRepository creates a new MappingRepository instance that can access remote data.
-func NewMappingRepository(baseURL string) domain.MappingRepository {
+func NewMappingRepository(url *url.URL, client *http.Client) domain.MappingRepository {
 	m := &mappingRepositoryImpl{
-		baseURL: strings.TrimSuffix(baseURL, "/"),
-		client:  &http.Client{},
+		baseURL: url,
+		client:  client,
 	}
 	return m
 }
 
 type mappingRepositoryImpl struct {
-	baseURL string
+	baseURL *url.URL
 	client  *http.Client
 }
 
 func (m *mappingRepositoryImpl) List(ctx context.Context) ([]*domain.Mapping, error) {
-	req, err := http.NewRequest("GET", m.baseURL+"/mappings", nil)
+	req, err := http.NewRequest("GET", m.baseURL.String()+"/mappings", nil)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -69,7 +69,7 @@ func (m *mappingRepositoryImpl) Create(ctx context.Context, mapping *domain.Mapp
 		return errors.WithStack(err)
 	}
 
-	req, err := http.NewRequest("POST", m.baseURL+"/mappings", bytes.NewBuffer(data))
+	req, err := http.NewRequest("POST", m.baseURL.String()+"/mappings", bytes.NewBuffer(data))
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -80,7 +80,7 @@ func (m *mappingRepositoryImpl) Create(ctx context.Context, mapping *domain.Mapp
 }
 
 func (m *mappingRepositoryImpl) DeleteByHost(ctx context.Context, host string) error {
-	req, err := http.NewRequest("DELETE", m.baseURL+"/mappings/"+host, nil)
+	req, err := http.NewRequest("DELETE", m.baseURL.String()+"/mappings/"+host, nil)
 	if err != nil {
 		return errors.WithStack(err)
 	}

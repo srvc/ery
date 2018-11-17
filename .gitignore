@@ -19,3 +19,4 @@
 /vendor
 /coverage.txt
 /dist
+/_tests/e2e/tmp
