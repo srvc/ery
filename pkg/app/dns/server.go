@@ -81,6 +81,8 @@ func (s *server) handle(w godns.ResponseWriter, req *godns.Msg) {
 		resp.MsgHdr.Rcode = godns.RcodeNameError
 	}
 
+	s.log.Debug("received message", zap.Any("req", q), zap.Any("resp", resp))
+
 	w.WriteMsg(resp)
 }
 
