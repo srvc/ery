@@ -87,3 +87,7 @@ test:
 .PHONY: cover
 cover:
 	go test $(GO_TEST_FLAGS) $(GO_COVER_FLAGS) ./...
+
+.PHONY: test-e2e
+test-e2e:
+	go test $(GO_TEST_FLAGS) ./_tests/e2e
