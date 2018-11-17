@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -17,7 +18,11 @@ func newCmdVersion(c di.AppComponent) *cobra.Command {
 		SilenceUsage:  true,
 		Run: func(cmd *cobra.Command, _ []string) {
 			cfg := c.Config()
-			fmt.Fprintf(cfg.OutWriter, "ery %s %s (%s %s)\n", cfg.Version, cfg.ReleaseType, cfg.BuildDate, cfg.Revision)
+			buf := bytes.NewBufferString("ery " + cfg.Version)
+			if cfg.Revision != "" && cfg.BuildDate != "" {
+				buf.WriteString(" (" + cfg.BuildDate + " " + cfg.Revision + ")")
+			}
+			fmt.Fprintln(cfg.OutWriter, buf.String())
 		},
 	}
 }

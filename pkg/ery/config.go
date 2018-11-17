@@ -7,8 +7,8 @@ type Config struct {
 	InReader             io.Reader
 	OutWriter, ErrWriter io.Writer
 
-	Version, Revision      string
-	BuildDate, ReleaseType string
+	Version             string
+	Revision, BuildDate string
 
 	TLD     string
 	Package string

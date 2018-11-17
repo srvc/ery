@@ -24,8 +24,12 @@ func run() error {
 	return errors.WithStack(command.Execute())
 }
 
+const (
+	version = "0.0.1"
+)
+
 var (
-	version, revision, buildDate, releaseType string
+	revision, buildDate string
 )
 
 func createConfig() *ery.Config {
@@ -34,10 +38,9 @@ func createConfig() *ery.Config {
 		OutWriter: os.Stdout,
 		ErrWriter: os.Stderr,
 
-		Version:     version,
-		Revision:    revision,
-		BuildDate:   buildDate,
-		ReleaseType: releaseType,
+		Version:   version,
+		Revision:  revision,
+		BuildDate: buildDate,
 
 		TLD:     "ery",
 		Package: "tools.srvc.ery",
