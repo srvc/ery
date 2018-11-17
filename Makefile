@@ -1,72 +1,89 @@
+PATH := ${PWD}/bin:${PATH}
+export PATH
+
 .DEFAULT_GOAL := all
 
-ORG := srvc
-PROJ := ery
-PKG := github.com/$(ORG)/$(PROJ)
-
-VERSION_MAJOR ?= 0
-VERSION_MINOR ?= 0
-VERSION_BUILD ?= 1
-
-VERSION ?= v$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_BUILD)
 REVISION ?= $(shell git describe --always)
 BUILD_DATE ?= $(shell date +'%Y-%m-%dT%H:%M:%SZ')
-RELEASE_TYPE ?= $(if $(shell git tag --contains $(REVISION) | grep $(VERSION)),stable,canary)
 
-BIN_DIR := ./bin
+GO_BUILD_FLAGS := -v
+GO_TEST_FLAGS := -v -timeout 2m
+GO_COVER_FLAGS := -coverprofile coverage.txt -covermode atomic
+SRC_FILES := $(shell go list -f '{{range .GoFiles}}{{printf "%s/%s\n" $$.Dir .}}{{end}}' ./...)
 
-#  build
+XC_ARCH := 386 amd64
+XC_OS := darwin linux windows
+
+
+#  Apps
 #----------------------------------------------------------------
-LDFLAGS := "-X main.version=$(VERSION) -X main.revision=$(REVISION) -X main.buildDate=$(BUILD_DATE) -X main.releaseType=$(RELEASE_TYPE)"
-GO_BUILD_FLAGS := -v -ldflags $(LDFLAGS)
-CMDS := $(notdir $(abspath $(wildcard cmd/*)))
+BIN_DIR := ./bin
+OUT_DIR := ./dist
+BINS :=
+PACKAGES :=
 
-.PHONY: $(CMDS)
-$(CMDS):
-	@go build $(GO_BUILD_FLAGS) -o ./$(BIN_DIR)/$@ $(PKG)/cmd/$@
+define cmd-tmpl
+
+$(eval NAME := $(notdir $(1)))
+$(eval OUT := $(addprefix $(BIN_DIR)/,$(NAME)))
+$(eval LDFLAGS := -ldflags "-X main.revision=$(REVISION) -X main.buildDate=$(BUILD_DATE)")
+
+$(OUT): $(SRC_FILES)
+	go build $(GO_BUILD_FLAGS) $(LDFLAGS) -o $(OUT) $(1)
+
+.PHONY: $(NAME)
+$(NAME): $(OUT)
+
+.PHONY: $(NAME)-package
+$(NAME)-package: $(NAME)
+	gex gox \
+		$(LDFLAGS) \
+		-os="$(XC_OS)" \
+		-arch="$(XC_ARCH)" \
+		-output="$(OUT_DIR)/$(NAME)_{{.OS}}_{{.Arch}}" \
+		$(1)
+
+$(eval BINS += $(OUT))
+$(eval PACKAGES += $(NAME)-package)
+
+endef
+
+$(foreach src,$(wildcard ./cmd/*),$(eval $(call cmd-tmpl,$(src))))
 
 .PHONY: all
-all: $(CMDS)
+all: $(BINS)
+
+.PHONY: packages
+packages: $(PACKAGES)
+
 
 #  commands
 #----------------------------------------------------------------
 .PHONY: setup
-setup: dep
-
-.PHONY: dep
-dep:
-	@dep ensure -v -vendor-only
+setup:
+ifdef CI
+	curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+endif
+	dep ensure -v -vendor-only
+	@go get github.com/izumin5210/gex/cmd/gex
+	gex --build --verbose
 
 .PHONY: clean
 clean:
-	rm -rf $(BIN_DIR)
+	rm -rf $(BIN_DIR)/* $(OUT_DIR)/*
 
-.PHONY: clobber
-clobber: clean
-	rm -rf vendor
-
-#  lint
-#----------------------------------------------------------------
 .PHONY: lint
-lint: gofmt golint
-
-.PHONY: gofmt
-gofmt:
-	@find . -name "*.go" | grep -v vendor/ | xargs gofmt -l -s -e
-
-.PHONY: golint
-golint:
-	@go list ./... | xargs golint -set_exit_status
-
-#  test
-#----------------------------------------------------------------
-GO_TEST_FLAGS := -v
-GO_COVER_FLAGS := -coverpkg ./... -coverprofile coverage.txt -covermode atomic
+lint:
+ifdef CI
+	gex reviewdog -reporter=github-pr-review
+else
+	gex reviewdog -diff="git diff master"
+endif
 
 .PHONY: test
 test:
-	@go test $(GO_TEST_FLAGS) ./...
+	go test $(GO_TEST_FLAGS) ./...
 
 .PHONY: cover
 cover:
-	@go test $(GO_TEST_FLAGS) $(GO_COVER_FLAGS) ./...
+	go test $(GO_TEST_FLAGS) $(GO_COVER_FLAGS) ./...
