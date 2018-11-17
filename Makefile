@@ -89,5 +89,5 @@ cover:
 	go test $(GO_TEST_FLAGS) $(GO_COVER_FLAGS) ./...
 
 .PHONY: test-e2e
-test-e2e:
+test-e2e: $(BIN_DIR)/ery
 	go test $(GO_TEST_FLAGS) ./_tests/e2e
