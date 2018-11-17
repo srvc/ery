@@ -224,6 +224,22 @@
   version = "v1.0.7"
 
 [[projects]]
+  digest = "1:a82223630c35be0e7b7e543bf8db95b8de3f1319671b30c6104ea521a00f36fd"
+  name = "github.com/mitchellh/gox"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "c9740af9c6574448fd48eb30a71f964014c7a837"
+  version = "v0.4.0"
+
+[[projects]]
+  digest = "1:05b88b3e999037a6f95fa9edc8234b3a12a1c9d12aaa93e0515c0a9aa76b9c10"
+  name = "github.com/mitchellh/iochan"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "b6e3aadd28864e14dae41ff5c7261455b1242d24"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:418133efe9b3d1425192f87e6680df1852f356d236bfb2d3ed892c2154478738"
   name = "github.com/moby/moby"
   packages = ["client"]
@@ -502,6 +518,7 @@
     "github.com/labstack/echo",
     "github.com/labstack/echo/middleware",
     "github.com/miekg/dns",
+    "github.com/mitchellh/gox",
     "github.com/moby/moby/client",
     "github.com/pkg/errors",
     "github.com/spf13/cobra",
