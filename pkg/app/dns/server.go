@@ -46,7 +46,7 @@ func (s *server) Serve(ctx context.Context) error {
 	var err error
 	errCh := make(chan error, 1)
 	go func() {
-		s.log.Debug("starting DNS server...", zap.String("addr", s.addr))
+		s.log.Info("starting DNS server...", zap.String("addr", s.addr))
 		errCh <- errors.WithStack(s.server.ListenAndServe())
 	}()
 
@@ -54,7 +54,7 @@ func (s *server) Serve(ctx context.Context) error {
 	case err = <-errCh:
 		err = errors.WithStack(err)
 	case <-ctx.Done():
-		s.log.Debug("shutdowning DNS server...", zap.Error(ctx.Err()))
+		s.log.Info("shutdowning DNS server...", zap.Error(ctx.Err()))
 		s.server.Shutdown()
 		err = errors.WithStack(<-errCh)
 	}

@@ -43,6 +43,7 @@ func (w *watcherImpl) Watch(pctx context.Context) error {
 	defer close(evCh)
 
 	eg, ctx := errgroup.WithContext(pctx)
+	w.log.Debug("start watching container events")
 
 	// collectors
 	for _, containerRepo := range w.containerRepos {

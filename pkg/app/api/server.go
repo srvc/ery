@@ -53,7 +53,7 @@ func (s *server) Serve(ctx context.Context) error {
 
 	errCh := make(chan error, 1)
 	go func() {
-		s.log.Debug("starting API server...", zap.Stringer("addr", addr), zap.String("hostname", s.hostname))
+		s.log.Info("starting API server...", zap.Stringer("addr", addr), zap.String("hostname", s.hostname))
 		errCh <- errors.WithStack(s.server.Serve(lis))
 	}()
 
@@ -61,7 +61,7 @@ func (s *server) Serve(ctx context.Context) error {
 	case err = <-errCh:
 		err = errors.WithStack(err)
 	case <-ctx.Done():
-		s.log.Debug("shutdowning API server...", zap.Error(ctx.Err()))
+		s.log.Info("shutdowning API server...", zap.Error(ctx.Err()))
 		s.server.Shutdown(context.Background())
 		err = errors.WithStack(<-errCh)
 	}
