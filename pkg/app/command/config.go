@@ -7,7 +7,7 @@ import (
 )
 
 type Config struct {
-	Hostname string
+	Hostname string `toml:"hostname"`
 }
 
 func loadConfig(fs afero.Fs, wd string, filename string) (cfg *Config, err error) {
