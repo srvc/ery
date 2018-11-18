@@ -12,6 +12,7 @@ import (
 
 	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/domain"
+	"github.com/srvc/ery/pkg/util/echoutil"
 )
 
 type server struct {
@@ -77,8 +78,8 @@ func (s *server) err(c echo.Context, code int, err error) {
 
 func (s *server) createHandler() http.Handler {
 	e := echo.New()
-	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(echoutil.ZapLoggerMiddleware(s.log))
 
 	e.GET("/mappings", s.handleGetMappings)
 	e.POST("/mappings", s.handlePostMappings)
