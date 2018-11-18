@@ -23,7 +23,7 @@ func NewEryCommand(c di.AppComponent) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:  "ery",
-		Args: cobra.ArbitraryArgs,
+		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 			return errors.WithStack(runCommand(c, args[0], args[1:]))
