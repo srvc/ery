@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"os"
 
 	"github.com/pkg/errors"
@@ -11,9 +11,12 @@ import (
 )
 
 func main() {
+	var exitCode int
 	if err := run(); err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, err)
+		exitCode = 1
 	}
+	os.Exit(exitCode)
 }
 
 func run() error {
