@@ -9,8 +9,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/spf13/afero"
 	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/app/api"
+	"github.com/srvc/ery/pkg/app/command"
 	"github.com/srvc/ery/pkg/app/container"
 	"github.com/srvc/ery/pkg/app/daemon"
 	"github.com/srvc/ery/pkg/app/dns"
@@ -36,6 +38,7 @@ type AppComponent interface {
 	ProxyServer() app.Server
 	ContainerWatcher() app.Watcher
 	DaemonFactory() daemon.Factory
+	CommandRunner() command.Runner
 }
 
 // NewAppComponent creates a new AppComponent instance.
@@ -66,6 +69,9 @@ type appComponentImpl struct {
 
 	httpClient     *http.Client
 	initHTTPClient sync.Once
+
+	commandRunner     command.Runner
+	initCommandRunner sync.Once
 }
 
 func (c *appComponentImpl) Config() *ery.Config {
@@ -161,4 +167,18 @@ func (c *appComponentImpl) HTTPClient() *http.Client {
 		c.httpClient = &http.Client{Transport: transport}
 	})
 	return c.httpClient
+}
+
+func (c *appComponentImpl) CommandRunner() command.Runner {
+	c.initCommandRunner.Do(func() {
+		c.commandRunner = command.NewRunner(
+			afero.NewOsFs(),
+			c.RemoteMappingRepository(),
+			c.Config().WorkingDir,
+			c.Config().OutWriter,
+			c.Config().ErrWriter,
+			c.Config().InReader,
+		)
+	})
+	return c.commandRunner
 }
