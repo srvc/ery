@@ -17,7 +17,10 @@ func main() {
 }
 
 func run() error {
-	cfg := createConfig()
+	cfg, err := createConfig()
+	if err != nil {
+		return errors.WithStack(err)
+	}
 	component := di.NewAppComponent(cfg)
 	command := cmd.NewEryCommand(component)
 
@@ -32,11 +35,17 @@ var (
 	revision, buildDate string
 )
 
-func createConfig() *ery.Config {
+func createConfig() (*ery.Config, error) {
+	wd, err := os.Getwd()
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
 	return &ery.Config{
-		InReader:  os.Stdin,
-		OutWriter: os.Stdout,
-		ErrWriter: os.Stderr,
+		InReader:   os.Stdin,
+		OutWriter:  os.Stdout,
+		ErrWriter:  os.Stderr,
+		WorkingDir: wd,
 
 		Version:   version,
 		Revision:  revision,
@@ -56,5 +65,5 @@ func createConfig() *ery.Config {
 			Name:        "ery",
 			Description: "Discover services in local",
 		},
-	}
+	}, nil
 }

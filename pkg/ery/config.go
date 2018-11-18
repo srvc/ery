@@ -6,6 +6,7 @@ import "io"
 type Config struct {
 	InReader             io.Reader
 	OutWriter, ErrWriter io.Writer
+	WorkingDir           string
 
 	Version             string
 	Revision, BuildDate string
