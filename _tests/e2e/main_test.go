@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -79,6 +80,7 @@ func TestEry(t *testing.T) {
 			"--detach",
 			fmt.Sprintf("--name=%s", containerName),
 			fmt.Sprintf("--env=PORT=%d", ery.proxyPort),
+			fmt.Sprintf("--env=DNS_PORT=%d", ery.dnsPort),
 			fmt.Sprintf("-p=%d:%d", port, ery.proxyPort),
 			fmt.Sprintf("--dns=%s", localIP),
 			fmt.Sprintf("--label=tools.srvc.ery.hostname=%s.services.local", name),
@@ -89,6 +91,10 @@ func TestEry(t *testing.T) {
 		return func() {
 			checkCmd(t, exec.Command("docker", "stop", containerName))
 		}
+	}
+
+	getURL := func(name string) string {
+		return fmt.Sprintf("http://%s.services.local:%d", name, ery.proxyPort)
 	}
 
 	time.Sleep(5 * time.Second)
@@ -102,7 +108,7 @@ func TestEry(t *testing.T) {
 
 		cli := ery.HTTPClient()
 
-		resp, err := cli.Get(fmt.Sprintf("http://local.services.local:%d/ping", ery.proxyPort))
+		resp, err := cli.Get(getURL("local") + "/ping")
 		checkErr(t, err)
 		data, err := ioutil.ReadAll(resp.Body)
 		checkErr(t, err)
@@ -123,7 +129,55 @@ func TestEry(t *testing.T) {
 
 		cli := ery.HTTPClient()
 
-		resp, err := cli.Get(fmt.Sprintf("http://docker.services.local:%d/ping", ery.proxyPort))
+		resp, err := cli.Get(getURL("docker") + "/ping")
+		checkErr(t, err)
+		data, err := ioutil.ReadAll(resp.Body)
+		checkErr(t, err)
+
+		if got, want := resp.StatusCode, 200; got != want {
+			t.Errorf("status is %d, want %d", got, want)
+		}
+
+		if got, want := string(data), "pong"; got != want {
+			t.Errorf("returned %q, want %q", got, want)
+		}
+	})
+
+	t.Run("docker to docker", func(t *testing.T) {
+		defer startServerOnDocker(t, "docker1")()
+		defer startServerOnDocker(t, "docker2")()
+
+		time.Sleep(5 * time.Second)
+
+		cli := ery.HTTPClient()
+
+		v := url.Values{}
+		v.Add("url", getURL("docker2")+"/ping")
+		resp, err := cli.Get(getURL("docker1") + "/delegate?" + v.Encode())
+		checkErr(t, err)
+		data, err := ioutil.ReadAll(resp.Body)
+		checkErr(t, err)
+
+		if got, want := resp.StatusCode, 200; got != want {
+			t.Errorf("status is %d, want %d", got, want)
+		}
+
+		if got, want := string(data), "pong"; got != want {
+			t.Errorf("returned %q, want %q", got, want)
+		}
+	})
+
+	t.Run("docker to local", func(t *testing.T) {
+		defer startServerOnDocker(t, "docker")()
+		defer startServerOnLocal(t, "local")()
+
+		time.Sleep(5 * time.Second)
+
+		cli := ery.HTTPClient()
+
+		v := url.Values{}
+		v.Add("url", getURL("local")+"/ping")
+		resp, err := cli.Get(getURL("docker") + "/delegate?" + v.Encode())
 		checkErr(t, err)
 		data, err := ioutil.ReadAll(resp.Body)
 		checkErr(t, err)
