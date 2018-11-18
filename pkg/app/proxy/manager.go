@@ -54,6 +54,7 @@ func (m *serverManager) Serve(ctx context.Context) error {
 		case err := <-errCh:
 			return errors.WithStack(err)
 		case <-ctx.Done():
+			m.log.Debug("stop listening mapping events")
 			return errors.WithStack(ctx.Err())
 		}
 	}

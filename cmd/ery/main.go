@@ -8,6 +8,7 @@ import (
 	"github.com/srvc/ery/pkg/ery"
 	"github.com/srvc/ery/pkg/ery/cmd"
 	"github.com/srvc/ery/pkg/ery/di"
+	"github.com/srvc/ery/pkg/util/cliutil"
 )
 
 func main() {
@@ -17,6 +18,8 @@ func main() {
 }
 
 func run() error {
+	defer cliutil.Close()
+
 	cfg, err := createConfig()
 	if err != nil {
 		return errors.WithStack(err)

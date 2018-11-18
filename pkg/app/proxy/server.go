@@ -43,7 +43,7 @@ func (s *server) Serve(ctx context.Context) error {
 	var err error
 	errCh := make(chan error, 1)
 	go func() {
-		s.log.Debug("starting proxy server...", zap.String("addr", s.addr))
+		s.log.Info("starting proxy server...", zap.String("addr", s.addr))
 		errCh <- errors.WithStack(s.server.ListenAndServe())
 	}()
 
@@ -51,7 +51,7 @@ func (s *server) Serve(ctx context.Context) error {
 	case err = <-errCh:
 		err = errors.WithStack(err)
 	case <-ctx.Done():
-		s.log.Debug("shutdowning proxy server...", zap.Error(ctx.Err()), zap.String("addr", s.addr))
+		s.log.Info("shutdowning proxy server...", zap.Error(ctx.Err()), zap.String("addr", s.addr))
 		s.server.Shutdown(context.TODO())
 		err = errors.WithStack(<-errCh)
 	}

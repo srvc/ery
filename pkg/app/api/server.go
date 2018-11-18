@@ -12,6 +12,7 @@ import (
 
 	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/domain"
+	"github.com/srvc/ery/pkg/util/echoutil"
 )
 
 type server struct {
@@ -53,7 +54,7 @@ func (s *server) Serve(ctx context.Context) error {
 
 	errCh := make(chan error, 1)
 	go func() {
-		s.log.Debug("starting API server...", zap.Stringer("addr", addr), zap.String("hostname", s.hostname))
+		s.log.Info("starting API server...", zap.Stringer("addr", addr), zap.String("hostname", s.hostname))
 		errCh <- errors.WithStack(s.server.Serve(lis))
 	}()
 
@@ -61,7 +62,7 @@ func (s *server) Serve(ctx context.Context) error {
 	case err = <-errCh:
 		err = errors.WithStack(err)
 	case <-ctx.Done():
-		s.log.Debug("shutdowning API server...", zap.Error(ctx.Err()))
+		s.log.Info("shutdowning API server...", zap.Error(ctx.Err()))
 		s.server.Shutdown(context.Background())
 		err = errors.WithStack(<-errCh)
 	}
@@ -77,8 +78,8 @@ func (s *server) err(c echo.Context, code int, err error) {
 
 func (s *server) createHandler() http.Handler {
 	e := echo.New()
-	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(echoutil.ZapLoggerMiddleware(s.log))
 
 	e.GET("/mappings", s.handleGetMappings)
 	e.POST("/mappings", s.handlePostMappings)
