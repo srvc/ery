@@ -57,6 +57,8 @@ $ docker run \
     - macOS
         - `sudo sh -c 'echo "nameserver 127.0.0.1" >> /etc/resolver/ery'`
         - if you wanna use other TLDs, you should replace "ery" to others on above command
+1. Add loopback address aliases (macOS only)
+    - `for i in $(seq 1 255); do /sbin/ifconfig lo0 alias 127.0.0.$i; done`
 1. Register as a startup process
     - `sudo ery daemon install`
     - `sudo ery daemon start`
