@@ -47,7 +47,9 @@ func runCommand(c di.AppComponent, name string, args []string) error {
 	eg, ctx := errgroup.WithContext(cctx)
 
 	eg.Go(func() error {
-		return errors.WithStack(c.CommandRunner().Run(ctx, name, args))
+		err := c.CommandRunner().Run(ctx, name, args)
+		cancel()
+		return errors.WithStack(err)
 	})
 
 	// Observe os signals
@@ -57,10 +59,11 @@ func runCommand(c di.AppComponent, name string, args []string) error {
 	select {
 	case sig := <-sigCh:
 		zap.L().Debug("received signal", zap.Stringer("signal", sig))
-		cancel()
 	case <-ctx.Done():
-		// do nothing
+		zap.L().Debug("done context", zap.Error(ctx.Err()))
 	}
+
+	cancel()
 
 	signal.Stop(sigCh)
 	close(sigCh)
