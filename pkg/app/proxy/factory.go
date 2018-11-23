@@ -7,7 +7,7 @@ import (
 
 // ServerFactory is a factory object for creating proxy server instances.
 type ServerFactory interface {
-	CreateServer(port domain.Port) app.Server
+	CreateServer(addr domain.Addr) app.Server
 }
 
 // NewFactory creates a new ServerFactory instance.
@@ -21,6 +21,6 @@ type serverFactory struct {
 	mappingRepo domain.MappingRepository
 }
 
-func (f *serverFactory) CreateServer(port domain.Port) app.Server {
-	return newServerWithPort(f.mappingRepo, port)
+func (f *serverFactory) CreateServer(addr domain.Addr) app.Server {
+	return newServerWithPort(f.mappingRepo, addr)
 }

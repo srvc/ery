@@ -1,13 +1,16 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"net"
+)
 
 // MappingRepository is an interface for accessing <hostname>-<port> mappings.
 type MappingRepository interface {
 	List(ctx context.Context) ([]*Mapping, error)
-	HasHost(ctx context.Context, host string) (bool, error)
+	LookupIP(ctx context.Context, host string) (net.IP, bool)
 	MapAddr(ctx context.Context, addr Addr) (Addr, error)
-	Create(ctx context.Context, mapping *Mapping) error
+	Create(ctx context.Context, lAddr Addr, rPort Port) (Addr, error)
 	DeleteByHost(ctx context.Context, host string) error
 	ListenEvent(ctx context.Context) (<-chan MappingEvent, <-chan error)
 }

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 
@@ -55,28 +56,41 @@ func (m *mappingRepositoryImpl) List(ctx context.Context) ([]*domain.Mapping, er
 	return body.Mappings, nil
 }
 
-func (m *mappingRepositoryImpl) HasHost(ctx context.Context, host string) (bool, error) {
-	return false, errors.New("remote.MappingRepository.HasHost() has not been implemented yet")
+func (m *mappingRepositoryImpl) LookupIP(ctx context.Context, host string) (net.IP, bool) {
+	panic("not implemented")
 }
 
 func (m *mappingRepositoryImpl) MapAddr(ctx context.Context, addr domain.Addr) (domain.Addr, error) {
-	return domain.Addr{}, errors.New("remote.MappingRepository.MapAddr() has not been implemented yet")
+	panic("not implemented")
 }
 
-func (m *mappingRepositoryImpl) Create(ctx context.Context, mapping *domain.Mapping) error {
-	data, err := json.Marshal(mapping)
+func (m *mappingRepositoryImpl) Create(ctx context.Context, addr domain.Addr, rPort domain.Port) (domain.Addr, error) {
+	var rAddr domain.Addr
+
+	if rPort != 0 {
+		return rAddr, errors.Errorf("cannot specify rPort: %v, %d", addr, rPort)
+	}
+
+	data, err := json.Marshal(addr)
 	if err != nil {
-		return errors.WithStack(err)
+		return rAddr, errors.WithStack(err)
 	}
 
 	req, err := http.NewRequest("POST", m.baseURL.String()+"/mappings", bytes.NewBuffer(data))
 	if err != nil {
-		return errors.WithStack(err)
+		return rAddr, errors.WithStack(err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	_, err = m.client.Do(req.WithContext(ctx))
-	return errors.WithStack(err)
+	resp, err := m.client.Do(req.WithContext(ctx))
+	if err != nil {
+		return rAddr, errors.WithStack(err)
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(&rAddr)
+
+	return rAddr, errors.WithStack(err)
 }
 
 func (m *mappingRepositoryImpl) DeleteByHost(ctx context.Context, host string) error {

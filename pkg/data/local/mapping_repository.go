@@ -2,88 +2,87 @@ package local
 
 import (
 	"context"
+	"net"
 	"sync"
 	"sync/atomic"
 
 	"github.com/pkg/errors"
 
 	"github.com/srvc/ery/pkg/domain"
+	"github.com/srvc/ery/pkg/util/netutil"
 )
 
 // NewMappingRepository creates a new MappingRepository instance that can access local data.
-func NewMappingRepository(defaultPort domain.Port) domain.MappingRepository {
+func NewMappingRepository() domain.MappingRepository {
 	return &mappingRepositoryImpl{
-		mappingByHost: new(sync.Map),
 		eventEmitters: new(sync.Map),
-		defaultPort:   defaultPort,
 	}
 }
 
 type mappingRepositoryImpl struct {
-	mappingByHost     *sync.Map
+	mappingByHost     mappingByHost
+	hosts             hosts
 	eventEmitters     *sync.Map
 	eventEmitterIDSeq uint64
-	defaultPort       domain.Port
 }
 
 func (r *mappingRepositoryImpl) List(ctx context.Context) ([]*domain.Mapping, error) {
-	mappings := []*domain.Mapping{}
-	r.mappingByHost.Range(func(_, v interface{}) bool {
-		if m, ok := v.(*domain.Mapping); ok {
-			mappings = append(mappings, m)
-		}
-		return true
-	})
-	return mappings, nil
+	return r.mappingByHost.List(), nil
 }
 
-func (r *mappingRepositoryImpl) HasHost(ctx context.Context, host string) (bool, error) {
-	_, ok := r.mappingByHost.Load(host)
-	return ok, nil
+func (r *mappingRepositoryImpl) LookupIP(ctx context.Context, host string) (net.IP, bool) {
+	return r.hosts.LookupIP(host)
 }
 
 func (r *mappingRepositoryImpl) MapAddr(ctx context.Context, addr domain.Addr) (domain.Addr, error) {
-	if v, ok := r.mappingByHost.Load(addr.Host); ok {
-		if m, ok := v.(*domain.Mapping); ok {
-			if got := m.Map(addr.Port); got.IsValid() {
-				return got, nil
-			}
-		} else {
-			r.DeleteByHost(ctx, addr.Host)
+	if m, ok := r.mappingByHost.Get(addr.Host); ok {
+		if got := m.Map(addr.Port); got.IsValid() {
+			return got, nil
 		}
 	}
 	return domain.Addr{}, errors.Errorf("%v is not found", addr)
 }
 
-func (r *mappingRepositoryImpl) Create(ctx context.Context, m *domain.Mapping) error {
-	if _, ok := r.mappingByHost.Load(m.Host); ok {
-		return errors.Errorf("%v has already been registered", m.Host)
+func (r *mappingRepositoryImpl) Create(ctx context.Context, lAddr domain.Addr, rPort domain.Port) (domain.Addr, error) {
+	m, ok := r.mappingByHost.Get(lAddr.Host)
+	release := func() {}
+	if ok {
+		if _, ok = m.PortMap[lAddr.Port]; ok {
+			return domain.Addr{}, errors.Errorf("%v has already been registered", lAddr.Host)
+		}
+	} else {
+		m = &domain.Mapping{VirtualHost: lAddr.Host, PortMap: domain.PortMap{}}
+		m.ProxyHost = r.hosts.GetIP(m.VirtualHost).String()
+		release = func() { r.hosts.Delete(m.VirtualHost) }
 	}
 
-	if addr, ok := m.PortAddrMap[0]; ok {
-		m.PortAddrMap[r.defaultPort] = addr
-		delete(m.PortAddrMap, 0)
+	if rPort == 0 {
+		var err error
+		rPort, err = netutil.GetFreePort(m.ProxyHost)
+		if err != nil {
+			release()
+			return domain.Addr{}, errors.WithStack(err)
+		}
 	}
+	m.PortMap[lAddr.Port] = rPort
 
-	r.mappingByHost.Store(m.Host, m)
+	r.mappingByHost.Set(m.VirtualHost, m)
 
 	r.emitEvent(domain.MappingEvent{
 		Type:    domain.MappingEventCreated,
 		Mapping: *m,
 	})
 
-	return nil
+	return domain.Addr{Host: m.ProxyHost, Port: rPort}, nil
 }
 
 func (r *mappingRepositoryImpl) DeleteByHost(ctx context.Context, host string) error {
-	if v, ok := r.mappingByHost.Load(host); ok {
+	if m, ok := r.mappingByHost.Get(host); ok {
 		r.mappingByHost.Delete(host)
-		if m, ok := v.(*domain.Mapping); ok {
-			r.emitEvent(domain.MappingEvent{
-				Type:    domain.MappingEventDestroyed,
-				Mapping: *m,
-			})
-		}
+		r.emitEvent(domain.MappingEvent{
+			Type:    domain.MappingEventDestroyed,
+			Mapping: *m,
+		})
 	}
 	return nil
 }
@@ -115,6 +114,70 @@ func (r *mappingRepositoryImpl) emitEvent(ev domain.MappingEvent) {
 	for _, id := range disposableIDs {
 		r.eventEmitters.Delete(id)
 	}
+}
+
+type mappingByHost struct {
+	m sync.Map
+}
+
+func (m *mappingByHost) Get(host string) (out *domain.Mapping, ok bool) {
+	var v interface{}
+	if v, ok = m.m.Load(host); ok {
+		out, ok = v.(*domain.Mapping)
+	}
+	return
+}
+
+func (m *mappingByHost) Set(host string, in *domain.Mapping) {
+	m.m.Store(host, in)
+}
+
+func (m *mappingByHost) List() (out []*domain.Mapping) {
+	m.m.Range(func(_, v interface{}) bool {
+		if m, ok := v.(*domain.Mapping); ok {
+			out = append(out, m)
+		}
+		return true
+	})
+	return
+}
+
+func (m *mappingByHost) Delete(host string) {
+	m.m.Delete(host)
+}
+
+type hosts struct {
+	m     sync.Map
+	ipSet sync.Map
+}
+
+func (h *hosts) GetIP(host string) net.IP {
+	if ip, ok := h.LookupIP(host); ok {
+		return ip
+	}
+	for {
+		ip := netutil.RandomLoopbackAddr()
+		if _, ok := h.ipSet.Load(ip.String()); !ok {
+			h.ipSet.Store(ip.String(), struct{}{})
+			h.m.Store(host, ip)
+			return ip
+		}
+	}
+}
+
+func (h *hosts) LookupIP(host string) (ip net.IP, ok bool) {
+	var v interface{}
+	if v, ok = h.m.Load(host); ok {
+		ip, ok = v.(net.IP)
+	}
+	return
+}
+
+func (h *hosts) Delete(host string) {
+	if ip, ok := h.LookupIP(host); ok {
+		h.ipSet.Delete(ip.String())
+	}
+	h.m.Delete(host)
 }
 
 type mappingEventEmitter struct {

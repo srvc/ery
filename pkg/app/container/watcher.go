@@ -102,15 +102,12 @@ func (w *watcherImpl) handleCreated(ctx context.Context, c domain.Container) {
 	for cport, hports := range c.PortBindings {
 		for _, hport := range hports {
 			for _, host := range hostnames {
-				m := &domain.Mapping{
-					Host: host,
-					PortAddrMap: domain.PortAddrMap{
-						cport: domain.LocalAddr(hport),
-					},
-				}
-				err := w.mappingRepo.Create(ctx, m)
-				if err != nil {
-					w.log.Warn("failed to create a new mapping", zap.Error(err), zap.Any("mapping", m), zap.String("container_id", c.ID))
+				lAddr := domain.Addr{Host: host, Port: cport}
+				rAddr, err := w.mappingRepo.Create(ctx, lAddr, hport)
+				if err == nil {
+					w.log.Info("created a new mapping", zap.Stringer("src_addr", &lAddr), zap.Stringer("dest_addr", &rAddr), zap.String("container_id", c.ID))
+				} else {
+					w.log.Warn("failed to create a new mapping", zap.Error(err), zap.Stringer("src_addr", &lAddr), zap.Any("dest_port", hport), zap.String("container_id", c.ID))
 				}
 			}
 		}
