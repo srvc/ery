@@ -89,20 +89,6 @@
   version = "v1.2.0"
 
 [[projects]]
-  digest = "1:d2754cafcab0d22c13541618a8029a70a8959eb3525ff201fe971637e2274cd0"
-  name = "github.com/google/go-cmp"
-  packages = [
-    "cmp",
-    "cmp/cmpopts",
-    "cmp/internal/diff",
-    "cmp/internal/function",
-    "cmp/internal/value",
-  ]
-  pruneopts = "UT"
-  revision = "3af367b6b30c263d47e8895973edcca9a49cf029"
-  version = "v0.2.0"
-
-[[projects]]
   digest = "1:f4f203acd8b11b8747bdcd91696a01dbc95ccb9e2ca2db6abf81c3a4f5e950ce"
   name = "github.com/google/go-github"
   packages = ["github"]
@@ -342,12 +328,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:9424f440bba8f7508b69414634aef3b2b3a877e522d8a4624692412805407bb7"
+  digest = "1:c1b1102241e7f645bc8e0c22ae352e8f0dc6484b6cb4d132fa9f24174e0119e2"
   name = "github.com/spf13/pflag"
   packages = ["."]
   pruneopts = "UT"
-  revision = "583c0c0531f06d5278b7d917446061adc344b5cd"
-  version = "v1.0.1"
+  revision = "298182f68c66c05229eb03ac171abe6e309ee79a"
+  version = "v1.0.3"
 
 [[projects]]
   digest = "1:214775c11fd26da94a100111a62daa25339198a4f9c57cb4aab352da889f5b93"
@@ -612,8 +598,6 @@
     "github.com/docker/docker/api/types",
     "github.com/docker/docker/api/types/events",
     "github.com/docker/docker/api/types/filters",
-    "github.com/google/go-cmp/cmp",
-    "github.com/google/go-cmp/cmp/cmpopts",
     "github.com/haya14busa/reviewdog/cmd/reviewdog",
     "github.com/kisielk/errcheck",
     "github.com/labstack/echo",
@@ -621,6 +605,7 @@
     "github.com/miekg/dns",
     "github.com/mitchellh/gox",
     "github.com/moby/moby/client",
+    "github.com/pelletier/go-toml",
     "github.com/pkg/errors",
     "github.com/spf13/afero",
     "github.com/spf13/cobra",
