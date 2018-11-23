@@ -19,10 +19,10 @@ var (
 	defaultScheme = "http"
 )
 
-func newServerWithPort(mappingRepo domain.MappingRepository, port domain.Port) app.Server {
+func newServerWithPort(mappingRepo domain.MappingRepository, addr domain.Addr) app.Server {
 	return &server{
 		mappingRepo: mappingRepo,
-		addr:        fmt.Sprintf(":%d", port),
+		addr:        addr,
 		log:         zap.L().Named("proxy"),
 	}
 }
@@ -30,28 +30,29 @@ func newServerWithPort(mappingRepo domain.MappingRepository, port domain.Port) a
 type server struct {
 	mappingRepo domain.MappingRepository
 	server      *http.Server
-	addr        string
+	addr        domain.Addr
 	log         *zap.Logger
 }
 
 func (s *server) Serve(ctx context.Context) error {
 	s.server = &http.Server{
-		Addr:    s.addr,
+		Addr:    s.addr.String(),
 		Handler: &httputil.ReverseProxy{Director: s.handle},
 	}
 
 	var err error
 	errCh := make(chan error, 1)
 	go func() {
-		s.log.Debug("starting proxy server...", zap.String("addr", s.addr))
+		s.log.Info("starting proxy server...", zap.Stringer("addr", &s.addr))
 		errCh <- errors.WithStack(s.server.ListenAndServe())
 	}()
 
 	select {
 	case err = <-errCh:
 		err = errors.WithStack(err)
+		s.log.Info("shutdowning proxy server...", zap.Error(err), zap.Stringer("addr", &s.addr))
 	case <-ctx.Done():
-		s.log.Debug("shutdowning proxy server...", zap.Error(ctx.Err()), zap.String("addr", s.addr))
+		s.log.Info("shutdowning proxy server...", zap.Error(ctx.Err()), zap.Stringer("addr", &s.addr))
 		s.server.Shutdown(context.TODO())
 		err = errors.WithStack(<-errCh)
 	}

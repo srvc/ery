@@ -50,7 +50,9 @@ func TestEry(t *testing.T) {
 			}
 		}
 		checkErr(t, os.MkdirAll(dir, 0755))
-		checkErr(t, ioutil.WriteFile(filepath.Join(dir, ".ery.toml"), []byte(`hostname = "`+name+`.services.local"`+"\n"), 0644))
+		cmd := ery.Command(ctx, "init", fmt.Sprintf("--host=%s.services.local", name))
+		cmd.Dir = dir
+		checkCmd(t, cmd)
 		return
 	}
 
@@ -212,7 +214,7 @@ func checkErr(t *testing.T, err error) {
 
 func getFreePort(t *testing.T) domain.Port {
 	t.Helper()
-	port, err := netutil.GetFreePort()
+	port, err := netutil.GetFreePort("")
 	checkErr(t, err)
 	return port
 }

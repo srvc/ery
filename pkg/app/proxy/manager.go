@@ -18,18 +18,17 @@ func NewManager(
 	factory ServerFactory,
 ) app.Server {
 	return &serverManager{
-		mappingRepo:     mappingRepo,
-		factory:         factory,
-		cancellerByPort: new(sync.Map),
-		log:             zap.L().Named("proxy"),
+		mappingRepo: mappingRepo,
+		factory:     factory,
+		log:         zap.L().Named("proxy"),
 	}
 }
 
 type serverManager struct {
-	mappingRepo     domain.MappingRepository
-	factory         ServerFactory
-	cancellerByPort *sync.Map
-	log             *zap.Logger
+	mappingRepo domain.MappingRepository
+	factory     ServerFactory
+	cancellers  cancellers
+	log         *zap.Logger
 }
 
 func (m *serverManager) Serve(ctx context.Context) error {
@@ -38,7 +37,7 @@ func (m *serverManager) Serve(ctx context.Context) error {
 	wg := new(sync.WaitGroup)
 
 	defer func() {
-		m.cancellerByPort = new(sync.Map)
+		m.cancellers = cancellers{}
 	}()
 
 	for {
@@ -54,6 +53,7 @@ func (m *serverManager) Serve(ctx context.Context) error {
 		case err := <-errCh:
 			return errors.WithStack(err)
 		case <-ctx.Done():
+			m.log.Debug("stop listening mapping events")
 			return errors.WithStack(ctx.Err())
 		}
 	}
@@ -64,35 +64,53 @@ func (m *serverManager) Serve(ctx context.Context) error {
 }
 
 func (m *serverManager) handleCreated(ctx context.Context, wg *sync.WaitGroup, ev domain.MappingEvent) {
-	for cport := range ev.PortAddrMap {
-		if v, ok := m.cancellerByPort.Load(cport); ok {
-			if canceller, ok := v.(*canceller); ok {
-				canceller.Add(1)
-			}
+	for cport := range ev.PortMap {
+		addr := domain.Addr{Host: ev.ProxyHost, Port: cport}
+		if c, ok := m.cancellers.Get(addr); ok {
+			c.Add(1)
 		} else {
 			wg.Add(1)
-			canceller, cctx := cancellerWithContext(ctx)
-			canceller.Add(1)
-			m.cancellerByPort.Store(cport, canceller)
-			go func(ctx context.Context, port domain.Port) {
+			c, cctx := cancellerWithContext(ctx)
+			c.Add(1)
+			m.cancellers.Set(addr, c)
+			go func(ctx context.Context, addr domain.Addr) {
 				defer wg.Done()
-				m.factory.CreateServer(port).Serve(ctx)
-			}(cctx, cport)
+				m.factory.CreateServer(addr).Serve(ctx)
+			}(cctx, addr)
 		}
 	}
 }
 
 func (m *serverManager) handleDestroyed(ctx context.Context, wg *sync.WaitGroup, ev domain.MappingEvent) {
-	for cport := range ev.PortAddrMap {
-		if v, ok := m.cancellerByPort.Load(cport); ok {
-			if canceller, ok := v.(*canceller); ok {
-				canceller.Done()
-				if canceller.count == 0 {
-					m.cancellerByPort.Delete(cport)
-				}
+	for cport := range ev.PortMap {
+		addr := domain.Addr{Host: ev.ProxyHost, Port: cport}
+		if c, ok := m.cancellers.Get(addr); ok {
+			c.Done()
+			if c.count == 0 {
+				m.cancellers.Delete(addr)
 			}
 		}
 	}
+}
+
+type cancellers struct {
+	byAddr sync.Map
+}
+
+func (cs *cancellers) Get(addr domain.Addr) (c *canceller, ok bool) {
+	var v interface{}
+	if v, ok = cs.byAddr.Load(addr.String()); ok {
+		c, ok = v.(*canceller)
+	}
+	return
+}
+
+func (cs *cancellers) Set(addr domain.Addr, c *canceller) {
+	cs.byAddr.Store(addr.String(), c)
+}
+
+func (cs *cancellers) Delete(addr domain.Addr) {
+	cs.byAddr.Delete(addr.String())
 }
 
 func cancellerWithContext(ctx context.Context) (*canceller, context.Context) {

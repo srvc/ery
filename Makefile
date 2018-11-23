@@ -7,6 +7,7 @@ REVISION ?= $(shell git describe --always)
 BUILD_DATE ?= $(shell date +'%Y-%m-%dT%H:%M:%SZ')
 
 GO_BUILD_FLAGS := -v
+GO_LDFLAGS := -ldflags "-X main.revision=$(REVISION) -X main.buildDate=$(BUILD_DATE)"
 GO_TEST_FLAGS := -v -timeout 3m
 GO_COVER_FLAGS := -coverprofile coverage.txt -covermode atomic
 SRC_FILES := $(shell go list -f '{{range .GoFiles}}{{printf "%s/%s\n" $$.Dir .}}{{end}}' ./...)
@@ -20,41 +21,45 @@ XC_OS := darwin linux windows
 BIN_DIR := ./bin
 OUT_DIR := ./dist
 BINS :=
-PACKAGES :=
 
 define cmd-tmpl
 
 $(eval NAME := $(notdir $(1)))
 $(eval OUT := $(addprefix $(BIN_DIR)/,$(NAME)))
-$(eval LDFLAGS := -ldflags "-X main.revision=$(REVISION) -X main.buildDate=$(BUILD_DATE)")
 
 $(OUT): $(SRC_FILES)
-	go build $(GO_BUILD_FLAGS) $(LDFLAGS) -o $(OUT) $(1)
+	go build $(GO_BUILD_FLAGS) $(GO_LDFLAGS) -o $(OUT) $(1)
 
 .PHONY: $(NAME)
 $(NAME): $(OUT)
 
+.PHONY: $(NAME)-install
+$(NAME)-install:
+	go install $(GO_BUILD_FLAGS) $(GO_LDFLAGS) $(1)
+
 .PHONY: $(NAME)-package
-$(NAME)-package: $(NAME)
+$(NAME)-package:
 	gex gox \
-		$(LDFLAGS) \
+		$(GO_LDFLAGS) \
 		-os="$(XC_OS)" \
 		-arch="$(XC_ARCH)" \
 		-output="$(OUT_DIR)/$(NAME)_{{.OS}}_{{.Arch}}" \
 		$(1)
 
-$(eval BINS += $(OUT))
-$(eval PACKAGES += $(NAME)-package)
+$(eval BINS += $(NAME))
 
 endef
 
 $(foreach src,$(wildcard ./cmd/*),$(eval $(call cmd-tmpl,$(src))))
 
 .PHONY: all
-all: $(BINS)
+all: $(addprefix $(BIN_DIR)/,$(BINS))
 
 .PHONY: packages
-packages: $(PACKAGES)
+packages: $(addsuffix -package,$(BINS))
+
+.PHONY: install
+install: $(addsuffix -install,$(BINS))
 
 
 #  commands

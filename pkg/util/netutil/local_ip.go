@@ -1,7 +1,9 @@
 package netutil
 
 import (
+	"math/rand"
 	"net"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -33,4 +35,9 @@ func LocalIP() (localhost net.IP) {
 	}
 
 	return
+}
+
+func RandomLoopbackAddr() net.IP {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return net.IPv4(127, 0, 0, byte(1+r.Intn(255)))
 }

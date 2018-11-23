@@ -12,7 +12,6 @@ import (
 
 	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/domain"
-	"github.com/srvc/ery/pkg/util/netutil"
 )
 
 var (
@@ -46,7 +45,7 @@ func (s *server) Serve(ctx context.Context) error {
 	var err error
 	errCh := make(chan error, 1)
 	go func() {
-		s.log.Debug("starting DNS server...", zap.String("addr", s.addr))
+		s.log.Info("starting DNS server...", zap.String("addr", s.addr))
 		errCh <- errors.WithStack(s.server.ListenAndServe())
 	}()
 
@@ -54,7 +53,7 @@ func (s *server) Serve(ctx context.Context) error {
 	case err = <-errCh:
 		err = errors.WithStack(err)
 	case <-ctx.Done():
-		s.log.Debug("shutdowning DNS server...", zap.Error(ctx.Err()))
+		s.log.Info("shutdowning DNS server...", zap.Error(ctx.Err()))
 		s.server.Shutdown()
 		err = errors.WithStack(<-errCh)
 	}
@@ -67,7 +66,7 @@ func (s *server) handle(w godns.ResponseWriter, req *godns.Msg) {
 	resp := new(godns.Msg)
 	resp.SetReply(req)
 
-	if s.handlable(q) {
+	if ip, ok := s.lookup(q); ok {
 		resp.Answer = append(resp.Answer, &godns.A{
 			Hdr: godns.RR_Header{
 				Name:   q.Name,
@@ -75,7 +74,7 @@ func (s *server) handle(w godns.ResponseWriter, req *godns.Msg) {
 				Class:  godns.ClassINET,
 				Ttl:    defaultTTL,
 			},
-			A: s.localhost(),
+			A: ip,
 		})
 	} else {
 		resp.MsgHdr.Rcode = godns.RcodeNameError
@@ -86,13 +85,9 @@ func (s *server) handle(w godns.ResponseWriter, req *godns.Msg) {
 	w.WriteMsg(resp)
 }
 
-func (s *server) handlable(q godns.Question) (ok bool) {
+func (s *server) lookup(q godns.Question) (ip net.IP, ok bool) {
 	if q.Qtype == godns.TypeA && q.Qclass == godns.ClassINET {
-		ok, _ = s.mappingRepo.HasHost(context.TODO(), strings.TrimSuffix(q.Name, "."))
+		ip, ok = s.mappingRepo.LookupIP(context.TODO(), strings.TrimSuffix(q.Name, "."))
 	}
 	return
-}
-
-func (s *server) localhost() net.IP {
-	return netutil.LocalIP() // FIXME
 }
