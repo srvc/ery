@@ -24,7 +24,6 @@ func NewEryCommand(c di.AppComponent) *cobra.Command {
 			return errors.WithStack(runCommand(c, args[0], args[1:]))
 		},
 	}
-	cmd.FParseErrWhitelist.UnknownFlags = true
 
 	cliutil.AddLoggingFlags(cmd)
 	cmd.PersistentFlags().Uint16Var(&c.Config().DNS.Port, "dns-port", 53, "DNS server runs on the specified port")
