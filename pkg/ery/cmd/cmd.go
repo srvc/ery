@@ -18,7 +18,7 @@ import (
 func NewEryCommand(c di.AppComponent) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:  "ery",
-		Args: cobra.ArbitraryArgs,
+		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 			return errors.WithStack(runCommand(c, args[0], args[1:]))
@@ -28,6 +28,7 @@ func NewEryCommand(c di.AppComponent) *cobra.Command {
 	cliutil.AddLoggingFlags(cmd)
 	cmd.PersistentFlags().Uint16Var(&c.Config().DNS.Port, "dns-port", 53, "DNS server runs on the specified port")
 	cmd.PersistentFlags().Uint16Var(&c.Config().Proxy.DefaultPort, "proxy-port", 80, "Proxy server runs on the specified port in default")
+	cmd.Flags().SetInterspersed(false)
 
 	cmd.AddCommand(
 		newCmdInit(c),
@@ -45,7 +46,9 @@ func runCommand(c di.AppComponent, name string, args []string) error {
 	eg, ctx := errgroup.WithContext(cctx)
 
 	eg.Go(func() error {
-		return errors.WithStack(c.CommandRunner().Run(ctx, name, args))
+		err := c.CommandRunner().Run(ctx, name, args)
+		cancel()
+		return errors.WithStack(err)
 	})
 
 	// Observe os signals
@@ -55,10 +58,11 @@ func runCommand(c di.AppComponent, name string, args []string) error {
 	select {
 	case sig := <-sigCh:
 		zap.L().Debug("received signal", zap.Stringer("signal", sig))
-		cancel()
 	case <-ctx.Done():
-		// do nothing
+		zap.L().Debug("done context", zap.Error(ctx.Err()))
 	}
+
+	cancel()
 
 	signal.Stop(sigCh)
 	close(sigCh)
