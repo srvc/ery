@@ -214,7 +214,7 @@ func checkErr(t *testing.T, err error) {
 
 func getFreePort(t *testing.T) domain.Port {
 	t.Helper()
-	port, err := netutil.GetFreePort()
+	port, err := netutil.GetFreePort("")
 	checkErr(t, err)
 	return port
 }

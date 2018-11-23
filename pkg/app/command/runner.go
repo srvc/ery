@@ -10,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/afero"
 	"github.com/srvc/ery/pkg/domain"
-	"github.com/srvc/ery/pkg/util/netutil"
 	"go.uber.org/zap"
 )
 
@@ -21,6 +20,7 @@ type Runner interface {
 func NewRunner(
 	fs afero.Fs,
 	mappingRepo domain.MappingRepository,
+	defaultPort domain.Port,
 	workingDir string,
 	outW, errW io.Writer,
 	inR io.Reader,
@@ -29,6 +29,7 @@ func NewRunner(
 		fs:          fs,
 		mappingRepo: mappingRepo,
 		workingDir:  workingDir,
+		defaultPort: defaultPort,
 		outW:        outW,
 		errW:        errW,
 		inR:         inR,
@@ -39,6 +40,7 @@ func NewRunner(
 type runnerImpl struct {
 	fs          afero.Fs
 	mappingRepo domain.MappingRepository
+	defaultPort domain.Port
 	workingDir  string
 	outW, errW  io.Writer
 	inR         io.Reader
@@ -80,19 +82,15 @@ func (r *runnerImpl) setup(ctx context.Context) error {
 		return errors.WithStack(err)
 	}
 
-	r.port, err = netutil.GetFreePort()
+	addr := domain.Addr{
+		Host: r.cfg.Hostname,
+		Port: r.defaultPort, // TODO: should be configurable
+	}
+	rAddr, err := r.mappingRepo.Create(ctx, addr, 0)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-
-	m := &domain.Mapping{
-		Host:        r.cfg.Hostname,
-		PortAddrMap: domain.PortAddrMap{0: domain.LocalAddr(r.port)},
-	}
-	err = r.mappingRepo.Create(ctx, m)
-	if err != nil {
-		return errors.WithStack(err)
-	}
+	r.port = rAddr.Port
 
 	return nil
 }

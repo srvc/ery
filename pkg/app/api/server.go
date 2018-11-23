@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 
@@ -19,31 +20,28 @@ type server struct {
 	mappingRepo domain.MappingRepository
 	server      *http.Server
 	hostname    string
+	port        domain.Port
 	log         *zap.Logger
 }
 
 // NewServer creates an API server instance.
-func NewServer(mappingRepo domain.MappingRepository, hostname string) app.Server {
+func NewServer(mappingRepo domain.MappingRepository, hostname string, port domain.Port) app.Server {
 	return &server{
 		mappingRepo: mappingRepo,
 		hostname:    hostname,
+		port:        port,
 		log:         zap.L().Named("api"),
 	}
 }
 
 func (s *server) Serve(ctx context.Context) error {
-	lis, err := net.Listen("tcp", ":0")
+	lAddr := domain.Addr{Host: s.hostname, Port: s.port}
+	rAddr, err := s.mappingRepo.Create(ctx, lAddr, 0)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	addr := lis.Addr()
-	err = s.mappingRepo.Create(ctx, &domain.Mapping{
-		Host: s.hostname,
-		PortAddrMap: domain.PortAddrMap{
-			0: domain.LocalAddr(domain.Port(addr.(*net.TCPAddr).Port)),
-		},
-	})
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", rAddr.Port))
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -54,7 +52,7 @@ func (s *server) Serve(ctx context.Context) error {
 
 	errCh := make(chan error, 1)
 	go func() {
-		s.log.Info("starting API server...", zap.Stringer("addr", addr), zap.String("hostname", s.hostname))
+		s.log.Info("starting API server...", zap.Stringer("src_addr", &lAddr), zap.Stringer("dest_addr", &rAddr), zap.String("hostname", s.hostname))
 		errCh <- errors.WithStack(s.server.Serve(lis))
 	}()
 
@@ -89,20 +87,20 @@ func (s *server) createHandler() http.Handler {
 }
 
 func (s *server) handlePostMappings(c echo.Context) error {
-	var req *domain.Mapping
+	var req domain.Addr
 
 	if err := c.Bind(&req); err != nil {
 		s.err(c, http.StatusBadRequest, err)
 		return errors.WithStack(err)
 	}
 
-	err := s.mappingRepo.Create(c.Request().Context(), req)
+	resp, err := s.mappingRepo.Create(c.Request().Context(), req, 0)
 	if err != nil {
 		s.err(c, http.StatusInternalServerError, err)
 		return errors.WithStack(err)
 	}
 
-	c.NoContent(http.StatusCreated)
+	c.JSON(http.StatusCreated, resp)
 
 	return nil
 }

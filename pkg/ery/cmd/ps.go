@@ -35,8 +35,8 @@ func runPSCommand(c di.AppComponent) error {
 	fmt.Fprintln(w, "HOST\tPORT\tTARGET")
 
 	for _, m := range mappings {
-		for port, addr := range m.PortAddrMap {
-			fmt.Fprintf(w, "%s\t%d\t%s:%d\n", m.Host, port, addr.Host, addr.Port)
+		for sPort, dPort := range m.PortMap {
+			fmt.Fprintf(w, "%s\t%d\t%s:%d\n", m.VirtualHost, sPort, m.ProxyHost, dPort)
 		}
 	}
 
