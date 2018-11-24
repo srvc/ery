@@ -8,21 +8,22 @@ import (
 	"github.com/takama/daemon"
 	"go.uber.org/zap"
 
+	"github.com/srvc/ery/pkg/ery"
 	"github.com/srvc/ery/pkg/ery/di"
 )
 
-func newCmdDaemon(c di.AppComponent) *cobra.Command {
+func newCmdDaemon(cfg *ery.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "daemon",
 		Short: "Manage daemon",
 	}
 
-	cmd.AddCommand(newDaemonCmds(c)...)
+	cmd.AddCommand(newDaemonCmds(cfg)...)
 
 	return cmd
 }
 
-func newDaemonCmds(c di.AppComponent) (cmds []*cobra.Command) {
+func newDaemonCmds(cfg *ery.Config) (cmds []*cobra.Command) {
 	funcs := []struct {
 		name string
 		desc string
@@ -65,8 +66,9 @@ func newDaemonCmds(c di.AppComponent) (cmds []*cobra.Command) {
 			SilenceErrors: true,
 			SilenceUsage:  true,
 			RunE: func(*cobra.Command, []string) error {
+				app := di.NewDaemonApp(cfg)
 
-				d, err := c.DaemonFactory().Get()
+				d, err := app.DaemonFactory.Get()
 				if err != nil {
 					log.Error("failed to init daemon", zap.Error(err))
 					return errors.WithStack(err)
@@ -77,9 +79,9 @@ func newDaemonCmds(c di.AppComponent) (cmds []*cobra.Command) {
 					log.Debug(f.name, zap.String("message", msg))
 				} else {
 					log.Error(f.name, zap.String("message", msg), zap.Error(err))
-					fmt.Fprintln(c.Config().ErrWriter, err)
+					fmt.Fprintln(cfg.ErrWriter, err)
 				}
-				fmt.Fprintln(c.Config().OutWriter, msg)
+				fmt.Fprintln(cfg.OutWriter, msg)
 				return errors.WithStack(err)
 			},
 		})

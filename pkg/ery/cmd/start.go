@@ -11,31 +11,33 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/srvc/ery/pkg/ery"
 	"github.com/srvc/ery/pkg/ery/di"
 )
 
-func newCmdStart(c di.AppComponent) *cobra.Command {
+func newCmdStart(cfg *ery.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "Start ery server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
-			return errors.WithStack(runStartCommand(c))
+			app := di.NewServerApp(cfg)
+			return errors.WithStack(runStartCommand(app))
 		},
 	}
 
 	return cmd
 }
 
-func runStartCommand(c di.AppComponent) error {
+func runStartCommand(app *di.ServerApp) error {
 	cctx, cancel := context.WithCancel(context.Background())
 	eg, ctx := errgroup.WithContext(cctx)
 
 	runFuncs := []func(context.Context) error{
-		c.DNSServer().Serve,
-		c.ProxyServer().ListenMappingEvents,
-		c.APIServer().Serve,
-		c.ContainerWatcher().ListenEvents,
+		app.DNSServer.Serve,
+		app.ProxyManager.ListenMappingEvents,
+		app.APIServer.Serve,
+		app.ContainerWatcher.ListenEvents,
 	}
 
 	for _, f := range runFuncs {

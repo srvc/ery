@@ -13,7 +13,7 @@ import (
 type ServerApp struct {
 	APIServer        api.Server
 	DNSServer        dns.Server
-	ProxyServer      proxy.Manager
+	ProxyManager     proxy.Manager
 	ContainerWatcher container.Watcher
 }
 

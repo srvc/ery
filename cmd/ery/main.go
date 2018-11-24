@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+
 	"github.com/srvc/ery/pkg/ery"
 	"github.com/srvc/ery/pkg/ery/cmd"
-	"github.com/srvc/ery/pkg/ery/di"
 	"github.com/srvc/ery/pkg/util/cliutil"
 )
 
@@ -27,8 +27,7 @@ func run() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	component := di.NewAppComponent(cfg)
-	command := cmd.NewEryCommand(component)
+	command := cmd.NewEryCommand(cfg)
 
 	return errors.WithStack(command.Execute())
 }

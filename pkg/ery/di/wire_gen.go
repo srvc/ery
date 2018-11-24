@@ -27,7 +27,7 @@ func NewServerApp(cfg *ery.Config) *ServerApp {
 	serverApp := &ServerApp{
 		APIServer:        server,
 		DNSServer:        dnsServer,
-		ProxyServer:      manager,
+		ProxyManager:     manager,
 		ContainerWatcher: watcher,
 	}
 	return serverApp

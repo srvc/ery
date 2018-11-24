@@ -3,42 +3,45 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io"
 	"text/tabwriter"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/srvc/ery/pkg/ery"
 	"github.com/srvc/ery/pkg/ery/di"
 )
 
-func newCmdPS(c di.AppComponent) *cobra.Command {
+func newCmdPS(cfg *ery.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "ps",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
-			return errors.WithStack(runPSCommand(c))
+			app := di.NewClientApp(cfg)
+			return errors.WithStack(runPSCommand(app, cfg.OutWriter))
 		},
 	}
 
 	return cmd
 }
 
-func runPSCommand(c di.AppComponent) error {
+func runPSCommand(app *di.ClientApp, w io.Writer) error {
 	ctx := context.Background()
 
-	mappings, err := c.RemoteMappingRepository().List(ctx)
+	mappings, err := app.MappingRepo.List(ctx)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	w := tabwriter.NewWriter(c.Config().OutWriter, 0, 0, 3, ' ', 0)
+	tw := tabwriter.NewWriter(w, 0, 0, 3, ' ', 0)
 
-	fmt.Fprintln(w, "HOST\tPORT\tTARGET")
+	fmt.Fprintln(tw, "HOST\tPORT\tTARGET")
 
 	for _, m := range mappings {
 		for sPort, dPort := range m.PortMap {
-			fmt.Fprintf(w, "%s\t%d\t%s:%d\n", m.VirtualHost, sPort, m.ProxyHost, dPort)
+			fmt.Fprintf(tw, "%s\t%d\t%s:%d\n", m.VirtualHost, sPort, m.ProxyHost, dPort)
 		}
 	}
 
-	return errors.WithStack(w.Flush())
+	return errors.WithStack(tw.Flush())
 }
