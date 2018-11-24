@@ -12,7 +12,7 @@ import (
 	"github.com/srvc/ery/pkg/domain"
 )
 
-// Manager is an interface of proxy servers' manager.
+// Watcher is an interface for watching container's events.
 type Watcher interface {
 	ListenEvents(context.Context) error
 }
