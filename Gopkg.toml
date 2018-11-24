@@ -92,3 +92,7 @@
 [[constraint]]
   name = "github.com/mitchellh/gox"
   version = "0.4.0"
+
+[[constraint]]
+  name = "github.com/google/go-cloud"
+  version = "0.5.0"
