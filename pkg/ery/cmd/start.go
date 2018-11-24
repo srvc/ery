@@ -11,7 +11,6 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/ery/di"
 )
 
@@ -29,24 +28,21 @@ func newCmdStart(c di.AppComponent) *cobra.Command {
 }
 
 func runStartCommand(c di.AppComponent) error {
-	svrs := []app.Server{
-		c.ProxyServer(),
-		c.DNSServer(),
-		c.APIServer(),
-	}
-
 	cctx, cancel := context.WithCancel(context.Background())
 	eg, ctx := errgroup.WithContext(cctx)
 
-	for _, s := range svrs {
-		s := s
-		time.Sleep(30 * time.Millisecond) // wait for starting proxy server manager
-		eg.Go(func() error { return errors.WithStack(s.Serve(ctx)) })
+	runFuncs := []func(context.Context) error{
+		c.DNSServer().Serve,
+		c.ProxyServer().ListenMappingEvents,
+		c.APIServer().Serve,
+		c.ContainerWatcher().ListenEvents,
 	}
 
-	eg.Go(func() error {
-		return errors.WithStack(c.ContainerWatcher().Watch(ctx))
-	})
+	for _, f := range runFuncs {
+		f := f
+		time.Sleep(30 * time.Millisecond) // wait for starting proxy server manager
+		eg.Go(func() error { return errors.WithStack(f(ctx)) })
+	}
 
 	// Observe os signals
 	sigCh := make(chan os.Signal, 1)

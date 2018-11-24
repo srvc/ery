@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/spf13/afero"
-	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/app/api"
 	"github.com/srvc/ery/pkg/app/command"
 	"github.com/srvc/ery/pkg/app/container"
@@ -33,10 +32,10 @@ type AppComponent interface {
 	RemoteMappingRepository() domain.MappingRepository
 
 	// app
-	APIServer() app.Server
-	DNSServer() app.Server
-	ProxyServer() app.Server
-	ContainerWatcher() app.Watcher
+	APIServer() api.Server
+	DNSServer() dns.Server
+	ProxyServer() proxy.Manager
+	ContainerWatcher() container.Watcher
 	DaemonFactory() daemon.Factory
 	CommandRunner() command.Runner
 }
@@ -51,10 +50,12 @@ func NewAppComponent(cfg *ery.Config) AppComponent {
 type appComponentImpl struct {
 	config *ery.Config
 
-	apiServer, dnsServer, proxyServer                         app.Server
+	apiServer                                                 api.Server
+	dnsServer                                                 dns.Server
+	proxyServer                                               proxy.Manager
 	initAPIServerOnce, initDNSServerOnce, initProxyServerOnce sync.Once
 
-	containerWatcher         app.Watcher
+	containerWatcher         container.Watcher
 	initContainerWatcherOnce sync.Once
 
 	daemonFactory         daemon.Factory
@@ -78,21 +79,21 @@ func (c *appComponentImpl) Config() *ery.Config {
 	return c.config
 }
 
-func (c *appComponentImpl) APIServer() app.Server {
+func (c *appComponentImpl) APIServer() api.Server {
 	c.initAPIServerOnce.Do(func() {
 		c.apiServer = api.NewServer(c.LocalMappingRepository(), &c.Config().API)
 	})
 	return c.apiServer
 }
 
-func (c *appComponentImpl) DNSServer() app.Server {
+func (c *appComponentImpl) DNSServer() dns.Server {
 	c.initDNSServerOnce.Do(func() {
 		c.dnsServer = dns.NewServer(c.LocalMappingRepository(), &c.Config().DNS)
 	})
 	return c.dnsServer
 }
 
-func (c *appComponentImpl) ProxyServer() app.Server {
+func (c *appComponentImpl) ProxyServer() proxy.Manager {
 	c.initProxyServerOnce.Do(func() {
 		mappingRepo := c.LocalMappingRepository()
 		c.proxyServer = proxy.NewManager(mappingRepo, proxy.NewFactory(mappingRepo))
@@ -100,7 +101,7 @@ func (c *appComponentImpl) ProxyServer() app.Server {
 	return c.proxyServer
 }
 
-func (c *appComponentImpl) ContainerWatcher() app.Watcher {
+func (c *appComponentImpl) ContainerWatcher() container.Watcher {
 	c.initContainerWatcherOnce.Do(func() {
 		c.containerWatcher = container.NewWatcher(
 			c.LocalMappingRepository(),

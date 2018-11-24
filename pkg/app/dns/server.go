@@ -10,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/domain"
 )
 
@@ -18,6 +17,11 @@ var (
 	defaultTTL     uint32 = 60
 	defaultNetwork        = "udp"
 )
+
+// Server is an interface of DNS server.
+type Server interface {
+	Serve(context.Context) error
+}
 
 // Config is a configuration object concerning in the DNS server.
 type Config struct {
@@ -29,7 +33,7 @@ func (c *Config) addr() string {
 }
 
 // NewServer creates a DNS server instance.
-func NewServer(mappingRepo domain.MappingRepository, cfg *Config) app.Server {
+func NewServer(mappingRepo domain.MappingRepository, cfg *Config) Server {
 	return &server{
 		Config:      cfg,
 		mappingRepo: mappingRepo,

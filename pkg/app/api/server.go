@@ -11,10 +11,14 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/domain"
 	"github.com/srvc/ery/pkg/util/echoutil"
 )
+
+// Server is an interface of API server.
+type Server interface {
+	Serve(context.Context) error
+}
 
 // Config is a configuration object concerning in the API server.
 type Config struct {
@@ -30,7 +34,7 @@ type server struct {
 }
 
 // NewServer creates an API server instance.
-func NewServer(mappingRepo domain.MappingRepository, cfg *Config) app.Server {
+func NewServer(mappingRepo domain.MappingRepository, cfg *Config) Server {
 	return &server{
 		Config:      cfg,
 		mappingRepo: mappingRepo,
