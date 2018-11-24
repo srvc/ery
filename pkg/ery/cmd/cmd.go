@@ -27,17 +27,20 @@ func NewEryCommand(c di.AppComponent) *cobra.Command {
 	}
 
 	var (
-		dnsPort, proxyPort uint16
+		dnsPort, apiPort uint16
+		apiHostname      string
 	)
 
 	cliutil.AddLoggingFlags(cmd)
 	cmd.PersistentFlags().Uint16Var(&dnsPort, "dns-port", 53, "DNS server runs on the specified port")
-	cmd.PersistentFlags().Uint16Var(&proxyPort, "proxy-port", 80, "Proxy server runs on the specified port in default")
+	cmd.PersistentFlags().Uint16Var(&apiPort, "api-port", 80, "API server runs on the specified port")
+	cmd.PersistentFlags().StringVar(&apiHostname, "api-host", "api.ery", "API server runs on the specified hostname")
 	cmd.Flags().SetInterspersed(false)
 
 	cobra.OnInitialize(func() {
 		c.Config().DNS.Port = domain.Port(dnsPort)
-		c.Config().Proxy.DefaultPort = domain.Port(proxyPort)
+		c.Config().API.Port = domain.Port(apiPort)
+		c.Config().API.Hostname = apiHostname
 	})
 
 	cmd.AddCommand(

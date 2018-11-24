@@ -60,13 +60,6 @@ func createConfig() (*ery.Config, error) {
 		TLD:     "ery",
 		Package: "tools.srvc.ery",
 
-		DNS:   &ery.DNSConfig{},
-		Proxy: &ery.ProxyConfig{},
-
-		API: &ery.APIConfig{
-			Hostname: "api.ery.local",
-		},
-
 		Daemon: &ery.DaemonConfig{
 			Name:        "ery",
 			Description: "Discover services in local",

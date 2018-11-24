@@ -3,7 +3,8 @@ package ery
 import (
 	"io"
 
-	"github.com/srvc/ery/pkg/domain"
+	"github.com/srvc/ery/pkg/app/api"
+	"github.com/srvc/ery/pkg/app/dns"
 )
 
 // Config is a configuration object.
@@ -18,25 +19,9 @@ type Config struct {
 	TLD     string
 	Package string
 
-	API    *APIConfig
-	DNS    *DNSConfig
-	Proxy  *ProxyConfig
+	API    api.Config
+	DNS    dns.Config
 	Daemon *DaemonConfig
-}
-
-// APIConfig is a configuration object concerning in the API server.
-type APIConfig struct {
-	Hostname string
-}
-
-// DNSConfig is a configuration object concerning in the DNS server.
-type DNSConfig struct {
-	Port domain.Port
-}
-
-// ProxyConfig is a configuration object concerning in the Proxy server.
-type ProxyConfig struct {
-	DefaultPort domain.Port
 }
 
 // DaemonConfig is a configuration object concerning in daemon.

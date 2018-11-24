@@ -80,14 +80,14 @@ func (c *appComponentImpl) Config() *ery.Config {
 
 func (c *appComponentImpl) APIServer() app.Server {
 	c.initAPIServerOnce.Do(func() {
-		c.apiServer = api.NewServer(c.LocalMappingRepository(), c.Config().API.Hostname, c.Config().Proxy.DefaultPort)
+		c.apiServer = api.NewServer(c.LocalMappingRepository(), &c.Config().API)
 	})
 	return c.apiServer
 }
 
 func (c *appComponentImpl) DNSServer() app.Server {
 	c.initDNSServerOnce.Do(func() {
-		c.dnsServer = dns.NewServer(c.LocalMappingRepository(), c.Config().DNS.Port)
+		c.dnsServer = dns.NewServer(c.LocalMappingRepository(), &c.Config().DNS)
 	})
 	return c.dnsServer
 }
@@ -131,7 +131,7 @@ func (c *appComponentImpl) LocalMappingRepository() domain.MappingRepository {
 
 func (c *appComponentImpl) RemoteMappingRepository() domain.MappingRepository {
 	c.initRemoteMappingRepoOnce.Do(func() {
-		url := &url.URL{Scheme: "http", Host: fmt.Sprintf("%s:%d", c.Config().API.Hostname, c.Config().Proxy.DefaultPort)}
+		url := &url.URL{Scheme: "http", Host: fmt.Sprintf("%s:%d", c.Config().API.Hostname, c.Config().API.Port)}
 		c.remoteMappingRepo = remote.NewMappingRepository(url, c.HTTPClient())
 	})
 	return c.remoteMappingRepo
@@ -174,7 +174,7 @@ func (c *appComponentImpl) CommandRunner() command.Runner {
 		c.commandRunner = command.NewRunner(
 			afero.NewOsFs(),
 			c.RemoteMappingRepository(),
-			c.Config().Proxy.DefaultPort,
+			c.Config().API.Port,
 			c.Config().WorkingDir,
 			c.Config().OutWriter,
 			c.Config().ErrWriter,

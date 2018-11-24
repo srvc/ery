@@ -16,26 +16,30 @@ import (
 	"github.com/srvc/ery/pkg/util/echoutil"
 )
 
+// Config is a configuration object concerning in the API server.
+type Config struct {
+	Hostname string
+	Port     domain.Port
+}
+
 type server struct {
+	*Config
 	mappingRepo domain.MappingRepository
 	server      *http.Server
-	hostname    string
-	port        domain.Port
 	log         *zap.Logger
 }
 
 // NewServer creates an API server instance.
-func NewServer(mappingRepo domain.MappingRepository, hostname string, port domain.Port) app.Server {
+func NewServer(mappingRepo domain.MappingRepository, cfg *Config) app.Server {
 	return &server{
+		Config:      cfg,
 		mappingRepo: mappingRepo,
-		hostname:    hostname,
-		port:        port,
 		log:         zap.L().Named("api"),
 	}
 }
 
 func (s *server) Serve(ctx context.Context) error {
-	lAddr := domain.Addr{Host: s.hostname, Port: s.port}
+	lAddr := domain.Addr{Host: s.Hostname, Port: s.Port}
 	rAddr, err := s.mappingRepo.Create(ctx, lAddr, 0)
 	if err != nil {
 		return errors.WithStack(err)
@@ -52,7 +56,7 @@ func (s *server) Serve(ctx context.Context) error {
 
 	errCh := make(chan error, 1)
 	go func() {
-		s.log.Info("starting API server...", zap.Stringer("src_addr", &lAddr), zap.Stringer("dest_addr", &rAddr), zap.String("hostname", s.hostname))
+		s.log.Info("starting API server...", zap.Stringer("src_addr", &lAddr), zap.Stringer("dest_addr", &rAddr), zap.String("hostname", s.Hostname))
 		errCh <- errors.WithStack(s.server.Serve(lis))
 	}()
 
