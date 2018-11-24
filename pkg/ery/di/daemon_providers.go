@@ -6,8 +6,8 @@ import (
 	"github.com/srvc/ery/pkg/ery"
 )
 
-func ProvideDaemonFactory(cfg *ery.DaemonConfig) daemon.Factory {
-	return daemon.NewFactory(cfg.Name, cfg.Description)
+func ProvideDaemonFactory(cfg *ery.Config) daemon.Factory {
+	return daemon.NewFactory(cfg.Name, cfg.Summary)
 }
 
 var DaemonSet = wire.NewSet(

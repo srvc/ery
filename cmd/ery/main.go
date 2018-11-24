@@ -52,16 +52,13 @@ func createConfig() (*ery.Config, error) {
 		ErrWriter:  os.Stderr,
 		WorkingDir: wd,
 
+		Name:      "ery",
+		Summary:   "Discover services in local",
 		Version:   version,
 		Revision:  revision,
 		BuildDate: buildDate,
 
 		TLD:     "ery",
 		Package: "tools.srvc.ery",
-
-		Daemon: &ery.DaemonConfig{
-			Name:        "ery",
-			Description: "Discover services in local",
-		},
 	}, nil
 }

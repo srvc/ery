@@ -13,19 +13,13 @@ type Config struct {
 	OutWriter, ErrWriter io.Writer
 	WorkingDir           string
 
+	Name, Summary       string
 	Version             string
 	Revision, BuildDate string
 
 	TLD     string
 	Package string
 
-	API    api.Config
-	DNS    dns.Config
-	Daemon *DaemonConfig
-}
-
-// DaemonConfig is a configuration object concerning in daemon.
-type DaemonConfig struct {
-	Name        string
-	Description string
+	API api.Config
+	DNS dns.Config
 }

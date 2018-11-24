@@ -48,8 +48,7 @@ func NewClientApp(cfg *ery.Config) *ClientApp {
 }
 
 func NewDaemonApp(cfg *ery.Config) *DaemonApp {
-	daemonConfig := ProvideDaemonConfig(cfg)
-	factory := ProvideDaemonFactory(daemonConfig)
+	factory := ProvideDaemonFactory(cfg)
 	daemonApp := &DaemonApp{
 		DaemonFactory: factory,
 	}

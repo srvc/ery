@@ -19,8 +19,9 @@ import (
 // NewEryCommand creates a new cobra.Command instance.
 func NewEryCommand(cfg *ery.Config) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "ery",
-		Args: cobra.MinimumNArgs(1),
+		Use:   cfg.Name,
+		Short: cfg.Summary,
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 			app := di.NewClientApp(cfg)

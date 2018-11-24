@@ -8,12 +8,10 @@ import (
 	"github.com/srvc/ery/pkg/ery"
 )
 
-func ProvideAPIConfig(cfg *ery.Config) *api.Config          { return &cfg.API }
-func ProvideDNSConfig(cfg *ery.Config) *dns.Config          { return &cfg.DNS }
-func ProvideDaemonConfig(cfg *ery.Config) *ery.DaemonConfig { return cfg.Daemon }
+func ProvideAPIConfig(cfg *ery.Config) *api.Config { return &cfg.API }
+func ProvideDNSConfig(cfg *ery.Config) *dns.Config { return &cfg.DNS }
 
 var CommonSet = wire.NewSet(
 	ProvideAPIConfig,
 	ProvideDNSConfig,
-	ProvideDaemonConfig,
 )
