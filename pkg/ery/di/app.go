@@ -80,14 +80,14 @@ func (c *appComponentImpl) Config() *ery.Config {
 
 func (c *appComponentImpl) APIServer() app.Server {
 	c.initAPIServerOnce.Do(func() {
-		c.apiServer = api.NewServer(c.LocalMappingRepository(), c.Config().API.Hostname, domain.Port(c.Config().Proxy.DefaultPort))
+		c.apiServer = api.NewServer(c.LocalMappingRepository(), c.Config().API.Hostname, c.Config().Proxy.DefaultPort)
 	})
 	return c.apiServer
 }
 
 func (c *appComponentImpl) DNSServer() app.Server {
 	c.initDNSServerOnce.Do(func() {
-		c.dnsServer = dns.NewServer(c.LocalMappingRepository(), domain.Port(c.Config().DNS.Port))
+		c.dnsServer = dns.NewServer(c.LocalMappingRepository(), c.Config().DNS.Port)
 	})
 	return c.dnsServer
 }
@@ -174,7 +174,7 @@ func (c *appComponentImpl) CommandRunner() command.Runner {
 		c.commandRunner = command.NewRunner(
 			afero.NewOsFs(),
 			c.RemoteMappingRepository(),
-			domain.Port(c.Config().Proxy.DefaultPort),
+			c.Config().Proxy.DefaultPort,
 			c.Config().WorkingDir,
 			c.Config().OutWriter,
 			c.Config().ErrWriter,

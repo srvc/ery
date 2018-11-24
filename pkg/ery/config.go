@@ -1,6 +1,10 @@
 package ery
 
-import "io"
+import (
+	"io"
+
+	"github.com/srvc/ery/pkg/domain"
+)
 
 // Config is a configuration object.
 type Config struct {
@@ -27,12 +31,12 @@ type APIConfig struct {
 
 // DNSConfig is a configuration object concerning in the DNS server.
 type DNSConfig struct {
-	Port uint16
+	Port domain.Port
 }
 
 // ProxyConfig is a configuration object concerning in the Proxy server.
 type ProxyConfig struct {
-	DefaultPort uint16
+	DefaultPort domain.Port
 }
 
 // DaemonConfig is a configuration object concerning in daemon.

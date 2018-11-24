@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/srvc/ery/pkg/domain"
 	"github.com/srvc/ery/pkg/ery/di"
 	"github.com/srvc/ery/pkg/util/cliutil"
 )
@@ -25,10 +26,19 @@ func NewEryCommand(c di.AppComponent) *cobra.Command {
 		},
 	}
 
+	var (
+		dnsPort, proxyPort uint16
+	)
+
 	cliutil.AddLoggingFlags(cmd)
-	cmd.PersistentFlags().Uint16Var(&c.Config().DNS.Port, "dns-port", 53, "DNS server runs on the specified port")
-	cmd.PersistentFlags().Uint16Var(&c.Config().Proxy.DefaultPort, "proxy-port", 80, "Proxy server runs on the specified port in default")
+	cmd.PersistentFlags().Uint16Var(&dnsPort, "dns-port", 53, "DNS server runs on the specified port")
+	cmd.PersistentFlags().Uint16Var(&proxyPort, "proxy-port", 80, "Proxy server runs on the specified port in default")
 	cmd.Flags().SetInterspersed(false)
+
+	cobra.OnInitialize(func() {
+		c.Config().DNS.Port = domain.Port(dnsPort)
+		c.Config().Proxy.DefaultPort = domain.Port(proxyPort)
+	})
 
 	cmd.AddCommand(
 		newCmdInit(c),
