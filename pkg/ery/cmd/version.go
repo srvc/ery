@@ -6,10 +6,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/srvc/ery/pkg/ery/di"
+	"github.com/srvc/ery/pkg/ery"
 )
 
-func newCmdVersion(c di.AppComponent) *cobra.Command {
+func newCmdVersion(cfg *ery.Config) *cobra.Command {
 	return &cobra.Command{
 		Use:           "version",
 		Short:         "Print version information",
@@ -17,7 +17,6 @@ func newCmdVersion(c di.AppComponent) *cobra.Command {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		Run: func(cmd *cobra.Command, _ []string) {
-			cfg := c.Config()
 			buf := bytes.NewBufferString("ery " + cfg.Version)
 			if cfg.Revision != "" && cfg.BuildDate != "" {
 				buf.WriteString(" (" + cfg.BuildDate + " " + cfg.Revision + ")")

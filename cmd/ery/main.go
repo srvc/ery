@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+
 	"github.com/srvc/ery/pkg/ery"
 	"github.com/srvc/ery/pkg/ery/cmd"
-	"github.com/srvc/ery/pkg/ery/di"
 	"github.com/srvc/ery/pkg/util/cliutil"
 )
 
@@ -27,8 +27,7 @@ func run() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	component := di.NewAppComponent(cfg)
-	command := cmd.NewEryCommand(component)
+	command := cmd.NewEryCommand(cfg)
 
 	return errors.WithStack(command.Execute())
 }
@@ -53,23 +52,13 @@ func createConfig() (*ery.Config, error) {
 		ErrWriter:  os.Stderr,
 		WorkingDir: wd,
 
+		Name:      "ery",
+		Summary:   "Discover services in local",
 		Version:   version,
 		Revision:  revision,
 		BuildDate: buildDate,
 
 		TLD:     "ery",
 		Package: "tools.srvc.ery",
-
-		DNS:   &ery.DNSConfig{},
-		Proxy: &ery.ProxyConfig{},
-
-		API: &ery.APIConfig{
-			Hostname: "api.ery.local",
-		},
-
-		Daemon: &ery.DaemonConfig{
-			Name:        "ery",
-			Description: "Discover services in local",
-		},
 	}, nil
 }

@@ -89,6 +89,18 @@
   version = "v1.2.0"
 
 [[projects]]
+  digest = "1:ab5c9f9d24aa14569408f4e74cd89eeb5661b120436face35ac067bcf8b8d617"
+  name = "github.com/google/go-cloud"
+  packages = [
+    "wire",
+    "wire/cmd/wire",
+    "wire/internal/wire",
+  ]
+  pruneopts = "UT"
+  revision = "2152f209f3c907645f7ebdcacdb2c18cd89e6fa8"
+  version = "0.5.0"
+
+[[projects]]
   digest = "1:f4f203acd8b11b8747bdcd91696a01dbc95ccb9e2ca2db6abf81c3a4f5e950ce"
   name = "github.com/google/go-github"
   packages = ["github"]
@@ -598,6 +610,8 @@
     "github.com/docker/docker/api/types",
     "github.com/docker/docker/api/types/events",
     "github.com/docker/docker/api/types/filters",
+    "github.com/google/go-cloud/wire",
+    "github.com/google/go-cloud/wire/cmd/wire",
     "github.com/haya14busa/reviewdog/cmd/reviewdog",
     "github.com/kisielk/errcheck",
     "github.com/labstack/echo",

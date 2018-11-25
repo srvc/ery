@@ -10,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/domain"
 	"github.com/srvc/ery/pkg/util/netutil"
 )
@@ -19,7 +18,12 @@ var (
 	defaultScheme = "http"
 )
 
-func newServerWithPort(mappingRepo domain.MappingRepository, addr domain.Addr) app.Server {
+// Server is an interface of Proxy server.
+type Server interface {
+	Serve(context.Context) error
+}
+
+func newServerWithPort(mappingRepo domain.MappingRepository, addr domain.Addr) Server {
 	return &server{
 		mappingRepo: mappingRepo,
 		addr:        addr,

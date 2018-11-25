@@ -9,16 +9,20 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/domain"
 )
+
+// Watcher is an interface for watching container's events.
+type Watcher interface {
+	ListenEvents(context.Context) error
+}
 
 // NewWatcher creates a new Watcher instance concerned to containers.
 func NewWatcher(
 	mappingRepo domain.MappingRepository,
 	containerRepos []domain.ContainerRepository,
 	tld, labelHostname string,
-) app.Watcher {
+) Watcher {
 	return &watcherImpl{
 		mappingRepo:    mappingRepo,
 		containerRepos: containerRepos,
@@ -38,7 +42,7 @@ type watcherImpl struct {
 	log            *zap.Logger
 }
 
-func (w *watcherImpl) Watch(pctx context.Context) error {
+func (w *watcherImpl) ListenEvents(pctx context.Context) error {
 	evCh := make(chan domain.ContainerEvent)
 	defer close(evCh)
 

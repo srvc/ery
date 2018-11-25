@@ -81,9 +81,9 @@ func TestEry(t *testing.T) {
 			"--rm",
 			"--detach",
 			fmt.Sprintf("--name=%s", containerName),
-			fmt.Sprintf("--env=PORT=%d", ery.proxyPort),
+			fmt.Sprintf("--env=PORT=%d", ery.apiPort),
 			fmt.Sprintf("--env=DNS_PORT=%d", ery.dnsPort),
-			fmt.Sprintf("-p=%d:%d", port, ery.proxyPort),
+			fmt.Sprintf("-p=%d:%d", port, ery.apiPort),
 			fmt.Sprintf("--dns=%s", localIP),
 			fmt.Sprintf("--label=tools.srvc.ery.hostname=%s.services.local", name),
 			httpImageName,
@@ -96,7 +96,7 @@ func TestEry(t *testing.T) {
 	}
 
 	getURL := func(name string) string {
-		return fmt.Sprintf("http://%s.services.local:%d", name, ery.proxyPort)
+		return fmt.Sprintf("http://%s.services.local:%d", name, ery.apiPort)
 	}
 
 	time.Sleep(5 * time.Second)
@@ -220,22 +220,22 @@ func getFreePort(t *testing.T) domain.Port {
 }
 
 type ery struct {
-	bin                string
-	dnsPort, proxyPort domain.Port
+	bin              string
+	dnsPort, apiPort domain.Port
 }
 
 func newEry(t *testing.T, bin string) *ery {
 	t.Helper()
 
 	return &ery{
-		bin:       bin,
-		dnsPort:   getFreePort(t),
-		proxyPort: getFreePort(t),
+		bin:     bin,
+		dnsPort: getFreePort(t),
+		apiPort: getFreePort(t),
 	}
 }
 
 func (e *ery) Command(ctx context.Context, args ...string) *exec.Cmd {
-	args = append([]string{fmt.Sprintf("--dns-port=%d", e.dnsPort), fmt.Sprintf("--proxy-port=%d", e.proxyPort), "-v"}, args...)
+	args = append([]string{fmt.Sprintf("--dns-port=%d", e.dnsPort), fmt.Sprintf("--api-port=%d", e.apiPort), "-v"}, args...)
 	return exec.CommandContext(ctx, e.bin, args...)
 }
 

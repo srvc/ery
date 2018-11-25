@@ -9,17 +9,17 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/srvc/ery/pkg/app/command"
-	"github.com/srvc/ery/pkg/ery/di"
+	"github.com/srvc/ery/pkg/ery"
 	"go.uber.org/zap"
 )
 
-func newCmdInit(c di.AppComponent) *cobra.Command {
-	wd := c.Config().WorkingDir
+func newCmdInit(cfg *ery.Config) *cobra.Command {
+	wd := cfg.WorkingDir
 
 	var (
 		proj = filepath.Base(wd)
 		org  = filepath.Base(filepath.Dir(wd))
-		tld  = c.Config().TLD
+		tld  = cfg.TLD
 	)
 
 	hostname := strings.Join([]string{proj, org, tld}, ".")

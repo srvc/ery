@@ -6,6 +6,7 @@ package tools
 
 // tool dependencies
 import (
+	_ "github.com/google/go-cloud/wire/cmd/wire"
 	_ "github.com/haya14busa/reviewdog/cmd/reviewdog"
 	_ "github.com/kisielk/errcheck"
 	_ "github.com/mitchellh/gox"

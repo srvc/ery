@@ -10,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/domain"
 )
 
@@ -19,33 +18,47 @@ var (
 	defaultNetwork        = "udp"
 )
 
+// Server is an interface of DNS server.
+type Server interface {
+	Serve(context.Context) error
+}
+
+// Config is a configuration object concerning in the DNS server.
+type Config struct {
+	Port domain.Port
+}
+
+func (c *Config) addr() string {
+	return fmt.Sprintf(":%d", c.Port)
+}
+
 // NewServer creates a DNS server instance.
-func NewServer(mappingRepo domain.MappingRepository, port domain.Port) app.Server {
+func NewServer(mappingRepo domain.MappingRepository, cfg *Config) Server {
 	return &server{
+		Config:      cfg,
 		mappingRepo: mappingRepo,
-		addr:        fmt.Sprintf(":%d", port),
 		log:         zap.L().Named("dns"),
 	}
 }
 
 type server struct {
+	*Config
 	mappingRepo domain.MappingRepository
 	server      *godns.Server
-	addr        string
 	log         *zap.Logger
 }
 
 func (s *server) Serve(ctx context.Context) error {
 	s.server = &godns.Server{
 		Handler: godns.HandlerFunc(s.handle),
-		Addr:    s.addr,
+		Addr:    s.addr(),
 		Net:     defaultNetwork,
 	}
 
 	var err error
 	errCh := make(chan error, 1)
 	go func() {
-		s.log.Info("starting DNS server...", zap.String("addr", s.addr))
+		s.log.Info("starting DNS server...", zap.String("addr", s.addr()))
 		errCh <- errors.WithStack(s.server.ListenAndServe())
 	}()
 

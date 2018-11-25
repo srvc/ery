@@ -8,15 +8,19 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/srvc/ery/pkg/app"
 	"github.com/srvc/ery/pkg/domain"
 )
+
+// Manager is an interface of proxy servers' manager.
+type Manager interface {
+	ListenMappingEvents(context.Context) error
+}
 
 // NewManager creates a new server instance for managings proxy servers.
 func NewManager(
 	mappingRepo domain.MappingRepository,
 	factory ServerFactory,
-) app.Server {
+) Manager {
 	return &serverManager{
 		mappingRepo: mappingRepo,
 		factory:     factory,
@@ -31,7 +35,7 @@ type serverManager struct {
 	log         *zap.Logger
 }
 
-func (m *serverManager) Serve(ctx context.Context) error {
+func (m *serverManager) ListenMappingEvents(ctx context.Context) error {
 	m.log.Debug("start listening mapping events")
 	evCh, errCh := m.mappingRepo.ListenEvent(ctx)
 	wg := new(sync.WaitGroup)

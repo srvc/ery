@@ -10,43 +10,59 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/srvc/ery/pkg/domain"
+	"github.com/srvc/ery/pkg/ery"
 	"github.com/srvc/ery/pkg/ery/di"
 	"github.com/srvc/ery/pkg/util/cliutil"
 )
 
 // NewEryCommand creates a new cobra.Command instance.
-func NewEryCommand(c di.AppComponent) *cobra.Command {
+func NewEryCommand(cfg *ery.Config) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "ery",
-		Args: cobra.MinimumNArgs(1),
+		Use:   cfg.Name,
+		Short: cfg.Summary,
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
-			return errors.WithStack(runCommand(c, args[0], args[1:]))
+			app := di.NewClientApp(cfg)
+			return errors.WithStack(runCommand(app, args[0], args[1:]))
 		},
 	}
 
+	var (
+		dnsPort, apiPort uint16
+		apiHostname      string
+	)
+
 	cliutil.AddLoggingFlags(cmd)
-	cmd.PersistentFlags().Uint16Var(&c.Config().DNS.Port, "dns-port", 53, "DNS server runs on the specified port")
-	cmd.PersistentFlags().Uint16Var(&c.Config().Proxy.DefaultPort, "proxy-port", 80, "Proxy server runs on the specified port in default")
+	cmd.PersistentFlags().Uint16Var(&dnsPort, "dns-port", 53, "DNS server runs on the specified port")
+	cmd.PersistentFlags().Uint16Var(&apiPort, "api-port", 80, "API server runs on the specified port")
+	cmd.PersistentFlags().StringVar(&apiHostname, "api-host", "api.ery", "API server runs on the specified hostname")
 	cmd.Flags().SetInterspersed(false)
 
+	cobra.OnInitialize(func() {
+		cfg.DNS.Port = domain.Port(dnsPort)
+		cfg.API.Port = domain.Port(apiPort)
+		cfg.API.Hostname = apiHostname
+	})
+
 	cmd.AddCommand(
-		newCmdInit(c),
-		newCmdDaemon(c),
-		newCmdStart(c),
-		newCmdPS(c),
-		newCmdVersion(c),
+		newCmdInit(cfg),
+		newCmdDaemon(cfg),
+		newCmdStart(cfg),
+		newCmdPS(cfg),
+		newCmdVersion(cfg),
 	)
 
 	return cmd
 }
 
-func runCommand(c di.AppComponent, name string, args []string) error {
+func runCommand(app *di.ClientApp, name string, args []string) error {
 	cctx, cancel := context.WithCancel(context.Background())
 	eg, ctx := errgroup.WithContext(cctx)
 
 	eg.Go(func() error {
-		err := c.CommandRunner().Run(ctx, name, args)
+		err := app.CommandRunner.Run(ctx, name, args)
 		cancel()
 		return errors.WithStack(err)
 	})
