@@ -1,10 +1,9 @@
 language: go
 
-go: '1.11'
+go: '1.12.x'
 
 env:
   global:
-  - DEP_RELEASE_TAG=v0.5.0
   - FILE_TO_DEPLOY="dist/*"
 
   # GITHUB_TOKEN
@@ -14,50 +13,36 @@ env:
 
 cache:
   directories:
-  - $GOPATH/pkg/dep
   - $GOPATH/pkg/mod
   - $HOME/.cache/go-build
 
 jobs:
   include:
   - name: lint
-    install: make setup
     script: make lint
     if: type = 'pull_request'
 
   - &test
-    install: make setup
+    name: test
     script: make test
     if: type != 'pull_request'
 
-  - <<: *test
-    go: master
-
-  - <<: *test
-    go: '1.10'
-
   - &test-e2e
-    <<: *test
-    name: "E2E test (go 1.11)"
+    name: "E2E test"
     sudo: required
     services:
     - docker
     script: make test-e2e
     if: type != 'pull_request'
 
-  # - <<: *test-e2e
-  #   go: '1.10'
-  #   name: "E2E test (go 1.10)"
-
-  - stage: deploy
-    install: make setup
-    script: make packages -j4
-    deploy:
-    - provider: releases
-      skip_cleanup: true
-      api_key: $GITHUB_TOKEN
-      file_glob: true
-      file: $FILE_TO_DEPLOY
-      on:
-        tags: true
-    if: type != 'pull_request'
+  # - stage: deploy
+  #   script: make packages -j4
+  #   deploy:
+  #   - provider: releases
+  #     skip_cleanup: true
+  #     api_key: $GITHUB_TOKEN
+  #     file_glob: true
+  #     file: $FILE_TO_DEPLOY
+  #     on:
+  #       tags: true
+  #   if: type != 'pull_request'
