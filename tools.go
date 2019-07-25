@@ -6,5 +6,7 @@ package tools
 
 // tool dependencies
 import (
+	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
 	_ "github.com/google/go-cloud/wire/cmd/wire"
+	_ "github.com/reviewdog/reviewdog/cmd/reviewdog"
 )
