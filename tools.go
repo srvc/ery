@@ -10,3 +10,7 @@ import (
 	_ "github.com/google/go-cloud/wire/cmd/wire"
 	_ "github.com/reviewdog/reviewdog/cmd/reviewdog"
 )
+
+//go:generate go build -v -o ./bin/golangci-lint github.com/golangci/golangci-lint/cmd/golangci-lint
+//go:generate go build -v -o ./bin/wire github.com/google/go-cloud/wire/cmd/wire
+//go:generate go build -v -o ./bin/reviewdog github.com/reviewdog/reviewdog/cmd/reviewdog
