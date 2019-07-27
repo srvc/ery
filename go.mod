@@ -11,7 +11,10 @@ require (
 	github.com/docker/go-connections v0.3.0 // indirect
 	github.com/docker/go-units v0.3.3 // indirect
 	github.com/golangci/golangci-lint v1.17.1
-	github.com/google/go-cloud v0.0.0-20181102182659-2152f209f3c9
+	github.com/google/wire v0.3.0
+	github.com/gorilla/context v1.1.1 // indirect
+	github.com/gorilla/mux v1.6.2 // indirect
+	github.com/konsorten/go-windows-terminal-sequences v1.0.1 // indirect
 	github.com/labstack/echo v3.3.5+incompatible
 	github.com/labstack/gommon v0.0.0-20180426014445-588f4e8bddc6 // indirect
 	github.com/miekg/dns v1.0.7
@@ -22,6 +25,7 @@ require (
 	github.com/pelletier/go-toml v1.2.0
 	github.com/pkg/errors v0.8.0
 	github.com/reviewdog/reviewdog v0.9.12
+	github.com/sirupsen/logrus v1.1.1 // indirect
 	github.com/spf13/afero v1.1.2
 	github.com/spf13/cast v1.3.0 // indirect
 	github.com/spf13/cobra v0.0.3
@@ -30,7 +34,12 @@ require (
 	github.com/stevvooe/resumable v0.0.0-20180830230917-22b14a53ba50 // indirect
 	github.com/takama/daemon v0.11.0
 	github.com/valyala/fasttemplate v0.0.0-20170224212429-dcecefd839c4 // indirect
+	go.uber.org/atomic v1.3.2 // indirect
+	go.uber.org/multierr v1.1.0 // indirect
 	go.uber.org/zap v1.9.1
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
+	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
+	google.golang.org/genproto v0.0.0-20181016170114-94acd270e44e // indirect
+	google.golang.org/grpc v1.15.0 // indirect
 	gotest.tools v2.2.0+incompatible // indirect
 )
