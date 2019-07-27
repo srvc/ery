@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/google/go-cloud/wire"
+	"github.com/google/wire"
 	"github.com/spf13/afero"
 
 	"github.com/srvc/ery/pkg/app/api"

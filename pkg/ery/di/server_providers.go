@@ -1,7 +1,7 @@
 package di
 
 import (
-	"github.com/google/go-cloud/wire"
+	"github.com/google/wire"
 
 	"github.com/srvc/ery/pkg/app/api"
 	"github.com/srvc/ery/pkg/app/container"
