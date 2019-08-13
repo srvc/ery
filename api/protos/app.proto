@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package srvc.ery;
+
+option go_package = "github.com/srvc/ery/api;api_pb";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+service AppService {
+  rpc ListApps (ListAppsRequest) returns (ListAppsResponse) {
+    option (google.api.http) = {
+      get: "/apps"
+    };
+  }
+  rpc GetApp (GetAppRequest) returns (App) {
+    option (google.api.http) = {
+      get: "/apps/{app_id}"
+    };
+  }
+  rpc CreateApp (CreateAppRequest) returns (App) {
+    option (google.api.http) = {
+      post: "/apps"
+      body: "app"
+    };
+  }
+  rpc UpdateApp (UpdateAppRequest) returns (App) {
+    option (google.api.http) = {
+      patch: "/apps/{app.app_id}"
+      body: "app"
+    };
+  }
+  rpc DeleteApp (DeleteAppRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/apps/{app_id}"
+    };
+  }
+}
+
+message App {
+  // Required. Output only.
+  string app_id = 1;
+
+  // Required.
+  string name = 2;
+
+  // Required.
+  string hostname = 3;
+
+  enum Type {
+    TYPE_UNSPECIFIED = 0;
+    TYPE_LOCAL       = 1;
+    TYPE_DOCKER      = 2;
+    TYPE_KUBERNETES  = 3;
+  }
+
+  // Required.
+  Type type = 4;
+
+  message Port {
+    enum Network {
+      TCP = 0;
+      UDP = 1;
+    }
+
+    // Required.
+    Network network = 1;
+    // Required.
+    uint32 exposed_port = 2;
+    // Required. Output only.
+    uint32 internal_port = 3;
+  }
+
+  // Required.
+  map<string, Port> ports = 5;
+
+  // Required. Output only.
+  string ip = 6;
+}
+
+message ListAppsRequest {
+}
+
+message ListAppsResponse {
+  repeated App apps = 1;
+}
+
+message GetAppRequest {
+  string app_id = 1;
+}
+
+message CreateAppRequest {
+  App app = 1;
+}
+
+message UpdateAppRequest {
+  App app = 1;
+}
+
+message DeleteAppRequest {
+  string app_id = 1;
+}

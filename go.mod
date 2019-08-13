@@ -12,4 +12,6 @@ require (
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.4.0
+	google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8
+	google.golang.org/grpc v1.21.0
 )
