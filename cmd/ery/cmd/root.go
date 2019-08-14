@@ -18,5 +18,9 @@ func New(io clib.IO) *cobra.Command {
 	cmd.SetIn(io.In())
 	clib.AddLoggingFlags(cmd)
 
+	cmd.AddCommand(
+		newStartCmd(),
+	)
+
 	return cmd
 }
