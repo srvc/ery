@@ -10,6 +10,7 @@ require (
 	github.com/izumin5210/execx v0.0.0-20190818083559-0ab235aa7cf7
 	github.com/izumin5210/grapi v0.4.0
 	github.com/mattn/go-colorable v0.1.2 // indirect
+	github.com/miekg/dns v1.1.16
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.4.0
