@@ -22,14 +22,15 @@ func NewAppRepository(ipPool domain.IPPool) *AppRepository {
 	}
 }
 
-func (r *AppRepository) Create(ctx context.Context, app *api_pb.App) error {
-	ip, err := r.ipPool.Get(ctx)
-	if err != nil {
-		return err
-	}
-	app.Ip = ip.String()
-	r.m.Store(app.GetHostname(), app)
-	return nil
+func (r *AppRepository) List(context.Context) ([]*api_pb.App, error) {
+	apps := []*api_pb.App{}
+	r.m.Range(func(_, v interface{}) bool {
+		if app, ok := v.(*api_pb.App); ok {
+			apps = append(apps, app)
+		}
+		return true
+	})
+	return apps, nil
 }
 
 func (r *AppRepository) GetByHostname(_ context.Context, hostname string) (*api_pb.App, error) {
@@ -40,4 +41,16 @@ func (r *AppRepository) GetByHostname(_ context.Context, hostname string) (*api_
 		}
 	}
 	return nil, fmt.Errorf("%s is not found", hostname)
+}
+
+func (r *AppRepository) Create(ctx context.Context, app *api_pb.App) error {
+	if app.Ip == "" {
+		ip, err := r.ipPool.Get(ctx)
+		if err != nil {
+			return err
+		}
+		app.Ip = ip.String()
+	}
+	r.m.Store(app.GetHostname(), app)
+	return nil
 }

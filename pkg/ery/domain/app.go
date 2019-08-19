@@ -7,6 +7,7 @@ import (
 )
 
 type AppRepository interface {
-	Create(context.Context, *api_pb.App) error
+	List(context.Context) ([]*api_pb.App, error)
 	GetByHostname(context.Context, string) (*api_pb.App, error)
+	Create(context.Context, *api_pb.App) error
 }
