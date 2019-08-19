@@ -7,11 +7,13 @@ import (
 
 	api_pb "github.com/srvc/ery/api"
 	"github.com/srvc/ery/pkg/ery/domain"
+	"go.uber.org/zap"
 )
 
 type AppRepository struct {
 	m      sync.Map
 	ipPool domain.IPPool
+	log    *zap.Logger
 }
 
 var _ domain.AppRepository = (*AppRepository)(nil)
@@ -19,6 +21,7 @@ var _ domain.AppRepository = (*AppRepository)(nil)
 func NewAppRepository(ipPool domain.IPPool) *AppRepository {
 	return &AppRepository{
 		ipPool: ipPool,
+		log:    zap.L().Named("mem"),
 	}
 }
 
@@ -52,5 +55,8 @@ func (r *AppRepository) Create(ctx context.Context, app *api_pb.App) error {
 		app.Ip = ip.String()
 	}
 	r.m.Store(app.GetHostname(), app)
+
+	r.log.Debug("registered a new app", zap.Any("app", app))
+
 	return nil
 }

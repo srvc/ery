@@ -16,6 +16,7 @@ require (
 	github.com/spf13/viper v1.4.0
 	github.com/takama/daemon v0.11.0
 	go.uber.org/zap v1.10.0
+	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8
-	google.golang.org/grpc v1.21.0
+	google.golang.org/grpc v1.23.0
 )

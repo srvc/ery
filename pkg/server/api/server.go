@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	defaultNetwork = "udp"
-	defaultPort    = 53
+	defaultNetwork = "tcp"
+	defaultPort    = 80
 )
 
 type Server struct {
@@ -45,6 +45,7 @@ func (s *Server) Serve(ctx context.Context) error {
 		return nil
 	}
 	s.server = grapiserver.New(
+		grapiserver.WithDefaultLogger(),
 		grapiserver.WithGrpcAddr(defaultNetwork, fmt.Sprintf("%s:%d", app.GetIp(), defaultPort)),
 		grapiserver.WithServers(
 			internal.NewAppServiceServer(s.appRepo),
