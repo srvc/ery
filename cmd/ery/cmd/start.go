@@ -8,6 +8,7 @@ import (
 	"github.com/srvc/ery/pkg/ery/infra/mem"
 	"github.com/srvc/ery/pkg/server/api"
 	"github.com/srvc/ery/pkg/server/dns"
+	"github.com/srvc/ery/pkg/server/proxy"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -22,11 +23,13 @@ func newStartCmd() *cobra.Command {
 			}
 			portPool := local.NewPortPool()
 			appRepo := mem.NewAppRepository(ipPool, portPool)
+			proxies := proxy.NewManager()
 			dns := dns.NewServer(appRepo)
-			api := api.NewServer(appRepo)
+			api := api.NewServer(appRepo, proxies)
 
 			eg, ctx := errgroup.WithContext(context.Background())
 
+			eg.Go(func() error { return proxies.Serve(ctx) })
 			eg.Go(func() error { return dns.Serve(ctx) })
 			eg.Go(func() error { return api.Serve(ctx) })
 

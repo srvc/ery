@@ -10,6 +10,7 @@ import (
 
 	api_pb "github.com/srvc/ery/api"
 	"github.com/srvc/ery/pkg/ery/domain"
+	"github.com/srvc/ery/pkg/server/proxy"
 )
 
 // AppServiceServer is a composite interface of api_pb.AppServiceServer and grapiserver.Server.
@@ -21,14 +22,17 @@ type AppServiceServer interface {
 // NewAppServiceServer creates a new AppServiceServer instance.
 func NewAppServiceServer(
 	appRepo domain.AppRepository,
+	proxies proxy.Manager,
 ) AppServiceServer {
 	return &appServiceServerImpl{
 		appRepo: appRepo,
+		proxies: proxies,
 	}
 }
 
 type appServiceServerImpl struct {
 	appRepo domain.AppRepository
+	proxies proxy.Manager
 }
 
 func (s *appServiceServerImpl) ListApps(ctx context.Context, req *api_pb.ListAppsRequest) (*api_pb.ListAppsResponse, error) {
@@ -48,6 +52,11 @@ func (s *appServiceServerImpl) CreateApp(ctx context.Context, req *api_pb.Create
 	app := req.GetApp()
 	err := s.appRepo.Create(ctx, app)
 	if err != nil {
+		return nil, err
+	}
+	err = s.proxies.AddProxy(ctx, app)
+	if err != nil {
+		// TODO: should delete app
 		return nil, err
 	}
 	return app, nil
