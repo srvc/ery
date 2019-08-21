@@ -20,7 +20,8 @@ func newStartCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			appRepo := mem.NewAppRepository(ipPool)
+			portPool := local.NewPortPool()
+			appRepo := mem.NewAppRepository(ipPool, portPool)
 			dns := dns.NewServer(appRepo)
 			api := api.NewServer(appRepo)
 

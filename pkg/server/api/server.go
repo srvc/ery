@@ -39,6 +39,13 @@ func (s *Server) Serve(ctx context.Context) error {
 		Hostname: "api.ery.local",
 		Type:     api_pb.App_TYPE_LOCAL,
 		Ip:       "127.0.0.1",
+		Ports: map[string]*api_pb.App_Port{
+			"PORT": {
+				Network:      api_pb.App_Port_TCP,
+				ExposedPort:  80,
+				InternalPort: 80,
+			},
+		},
 	}
 	err := s.appRepo.Create(ctx, app)
 	if err != nil {

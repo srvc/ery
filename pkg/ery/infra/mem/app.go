@@ -11,14 +11,18 @@ import (
 )
 
 type AppRepository struct {
-	m      sync.Map
-	ipPool domain.IPPool
-	log    *zap.Logger
+	m        sync.Map
+	ipPool   domain.IPPool
+	portPool domain.PortPool
+	log      *zap.Logger
 }
 
 var _ domain.AppRepository = (*AppRepository)(nil)
 
-func NewAppRepository(ipPool domain.IPPool) *AppRepository {
+func NewAppRepository(
+	ipPool domain.IPPool,
+	portPool domain.PortPool,
+) *AppRepository {
 	return &AppRepository{
 		ipPool: ipPool,
 		log:    zap.L().Named("mem"),
@@ -53,6 +57,15 @@ func (r *AppRepository) Create(ctx context.Context, app *api_pb.App) error {
 			return err
 		}
 		app.Ip = ip.String()
+	}
+	for _, port := range app.GetPorts() {
+		if port.GetInternalPort() == 0 {
+			p, err := r.portPool.Get(ctx)
+			if err != nil {
+				return err
+			}
+			port.InternalPort = uint32(p)
+		}
 	}
 	r.m.Store(app.GetHostname(), app)
 
