@@ -126,8 +126,8 @@ github.com/inconshreveable/mousetrap v1.0.0 h1:Z8tu5sraLXCXIcARxBp/8cbvlwVa7Z1NH
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/izumin5210/clig v0.2.0 h1:msbqSd7m4z1FF+0V+31T4/St3evxDaxnq+1TYro9gXs=
 github.com/izumin5210/clig v0.2.0/go.mod h1:ThTkzDLziQQrsaeAuzhhV+EzDbzUBlNbxrDs8HTJ9qM=
-github.com/izumin5210/execx v0.0.0-20190818083559-0ab235aa7cf7 h1:FYBo46bRzeOfaX4zz3vxdpMn5gbIfZHLVvbH7hsJuLE=
-github.com/izumin5210/execx v0.0.0-20190818083559-0ab235aa7cf7/go.mod h1:8Cg6UDnN/ZZa6+/1YK2oEalAfaZ48tyUogNjWVRwSms=
+github.com/izumin5210/execx v0.0.0-20190821013237-58c8ca513c37 h1:4GG8ZnGnbKx0mhwKNfkDFLuk2rxP/NqFU6vcPAiAmHI=
+github.com/izumin5210/execx v0.0.0-20190821013237-58c8ca513c37/go.mod h1:8Cg6UDnN/ZZa6+/1YK2oEalAfaZ48tyUogNjWVRwSms=
 github.com/izumin5210/gex v0.4.5 h1:qa9MWsGgRislHyNM98786YxolDgEbPP595Ajz/p7VXQ=
 github.com/izumin5210/gex v0.4.5/go.mod h1:a3mEUh4AHD05YgcgPnLqyScKTqG39Ap5wHLQZlbM1WI=
 github.com/izumin5210/grapi v0.4.0 h1:ZFGdJMSWc3AP+AHkNoAWTF4sMUG5NT7cKamiq5Fvx/o=
