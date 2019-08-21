@@ -154,7 +154,7 @@
           "description": "Required. Output only.",
           "readOnly": true
         },
-        "name": {
+        "env": {
           "type": "string",
           "description": "Optional."
         }
