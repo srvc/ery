@@ -27,7 +27,7 @@ func newPsCmd() *cobra.Command {
 			}
 
 			for _, app := range resp.GetApps() {
-				fmt.Fprintf(c.OutOrStdout(), "%s\t%s -> %s\n", app.GetName(), app.GetHostname(), app.GetIp())
+				fmt.Fprintf(c.OutOrStdout(), "%s\t%s\t%s -> %s\n", app.GetAppId()[:7], app.GetName(), app.GetHostname(), app.GetIp())
 			}
 			return nil
 		},

@@ -2,6 +2,7 @@ package mem
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"sync"
 
@@ -51,6 +52,13 @@ func (r *AppRepository) GetByHostname(_ context.Context, hostname string) (*api_
 }
 
 func (r *AppRepository) Create(ctx context.Context, app *api_pb.App) error {
+	if app.AppId == "" {
+		k := make([]byte, 16)
+		if _, err := rand.Read(k); err != nil {
+			return err
+		}
+		app.AppId = fmt.Sprintf("%x", k)
+	}
 	if app.Ip == "" {
 		ip, err := r.ipPool.Get(ctx)
 		if err != nil {
