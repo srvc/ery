@@ -25,8 +25,9 @@ func NewAppRepository(
 	portPool domain.PortPool,
 ) *AppRepository {
 	return &AppRepository{
-		ipPool: ipPool,
-		log:    zap.L().Named("mem"),
+		ipPool:   ipPool,
+		portPool: portPool,
+		log:      zap.L().Named("mem"),
 	}
 }
 
