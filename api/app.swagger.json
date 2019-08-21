@@ -153,6 +153,10 @@
           "format": "int64",
           "description": "Required. Output only.",
           "readOnly": true
+        },
+        "name": {
+          "type": "string",
+          "description": "Optional."
         }
       }
     },
@@ -185,8 +189,8 @@
           "description": "Required."
         },
         "ports": {
-          "type": "object",
-          "additionalProperties": {
+          "type": "array",
+          "items": {
             "$ref": "#/definitions/AppPort"
           },
           "description": "Required."

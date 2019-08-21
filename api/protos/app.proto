@@ -69,10 +69,12 @@ message App {
     uint32 exposed_port = 2;
     // Required. Output only.
     uint32 internal_port = 3;
+    // Optional.
+    string name = 4;
   }
 
   // Required.
-  map<string, Port> ports = 5;
+  repeated Port ports = 5;
 
   // Required. Output only.
   string ip = 6;
