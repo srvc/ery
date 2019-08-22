@@ -50,6 +50,15 @@ type KubernetesApp struct {
 	Ports     map[Port]Port
 }
 
+func (c *Config) FindProject(name string) *Project {
+	for _, p := range c.Projects {
+		if p.Name == name {
+			return p
+		}
+	}
+	return nil
+}
+
 var configDir = filepath.Join(os.Getenv("HOME"), ".config", "ery")
 
 func NewViper(fs afero.Fs) *viper.Viper {

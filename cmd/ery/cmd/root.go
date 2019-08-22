@@ -22,6 +22,7 @@ func New(io clib.IO) *cobra.Command {
 		newStartCmd(),
 		newPsCmd(),
 		newDaemonCmd(),
+		newUpCmd(),
 	)
 
 	return cmd
