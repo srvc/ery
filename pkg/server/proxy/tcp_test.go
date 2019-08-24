@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/srvc/ery/pkg/ery/domain"
+	"github.com/srvc/ery"
 	"github.com/srvc/ery/pkg/server/proxy"
 	netutil "github.com/srvc/ery/pkg/util/net"
 )
@@ -35,8 +35,8 @@ func TestTCPServer(t *testing.T) {
 	}
 
 	proxy := proxy.NewTCPServer(
-		&domain.Addr{IP: "127.0.0.1", Port: domain.Port(port)},
-		&domain.Addr{IP: "127.0.0.1", Port: domain.Port(svr.Listener.Addr().(*net.TCPAddr).Port)},
+		&ery.Addr{IP: net.ParseIP("127.0.0.1"), Port: ery.Port(port)},
+		&ery.Addr{IP: net.ParseIP("127.0.0.1"), Port: ery.Port(svr.Listener.Addr().(*net.TCPAddr).Port)},
 	)
 
 	var wg sync.WaitGroup

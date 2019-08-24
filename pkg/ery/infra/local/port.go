@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/srvc/ery"
 	"github.com/srvc/ery/pkg/ery/domain"
 	netutil "github.com/srvc/ery/pkg/util/net"
 )
@@ -18,14 +19,14 @@ func NewPortPool() *PortPool {
 	return &PortPool{}
 }
 
-func (p *PortPool) Get(ctx context.Context) (domain.Port, error) {
+func (p *PortPool) Get(ctx context.Context) (ery.Port, error) {
 	p.m.Lock()
 	defer p.m.Unlock()
 
 	port, err := netutil.GetFreePort()
 	if err != nil {
-		return domain.Port(0), err
+		return ery.Port(0), err
 	}
 
-	return domain.Port(port), nil
+	return ery.Port(port), nil
 }

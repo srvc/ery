@@ -2,18 +2,16 @@ package proxy
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net"
 	"strings"
 	"sync"
 
+	"github.com/srvc/ery"
 	"go.uber.org/zap"
-
-	"github.com/srvc/ery/pkg/ery/domain"
 )
 
-func NewTCPServer(src, dest *domain.Addr) *TCPServer {
+func NewTCPServer(src, dest *ery.Addr) *TCPServer {
 	return &TCPServer{
 		src:  src,
 		dest: dest,
@@ -22,12 +20,12 @@ func NewTCPServer(src, dest *domain.Addr) *TCPServer {
 }
 
 type TCPServer struct {
-	src, dest *domain.Addr
+	src, dest *ery.Addr
 	log       *zap.Logger
 }
 
 func (s *TCPServer) Serve(ctx context.Context) error {
-	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", s.src.IP, s.src.Port))
+	addr, err := net.ResolveTCPAddr("tcp", s.src.String())
 	if err != nil {
 		return err
 	}
@@ -89,7 +87,7 @@ func (s *TCPServer) handleConn(ctx context.Context, srcConn *net.TCPConn) {
 		}
 	}
 
-	destAddr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", s.dest.IP, s.dest.Port))
+	destAddr, err := net.ResolveTCPAddr("tcp", s.dest.String())
 	if err != nil {
 		// TODO: handle error
 		return

@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"sync"
 
+	"github.com/srvc/ery"
 	api_pb "github.com/srvc/ery/api"
-	"github.com/srvc/ery/pkg/ery/domain"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -71,8 +72,8 @@ func (m *managerImpl) AddProxy(ctx context.Context, app *api_pb.App) error {
 			appServer.servers = append(
 				appServer.servers,
 				NewTCPServer(
-					&domain.Addr{IP: app.GetIp(), Port: domain.Port(port.GetExposedPort())},
-					&domain.Addr{IP: "localhost", Port: domain.Port(port.GetInternalPort())},
+					&ery.Addr{IP: net.ParseIP(app.GetIp()), Port: ery.Port(port.GetExposedPort())},
+					&ery.Addr{IP: net.ParseIP("127.0.0.1"), Port: ery.Port(port.GetInternalPort())},
 				),
 			)
 		case api_pb.App_Port_UDP:

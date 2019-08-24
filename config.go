@@ -29,8 +29,6 @@ type App struct {
 	Kubernetes *KubernetesApp
 }
 
-type Port uint16
-
 type LocalApp struct {
 	PortEnv map[string]Port `mapstructure:"port_env"`
 	Cmd     []string
