@@ -13,17 +13,20 @@ type Port uint16
 
 type Addr struct {
 	IP   net.IP
+	Host string
 	Port Port
 }
 
 var _ pflag.Value = (*Addr)(nil)
 
 func (a *Addr) String() string {
-	var ip string
+	var h string
 	if a.IP != nil {
-		ip = a.IP.String()
+		h = a.IP.String()
+	} else if a.Host != "" {
+		h = a.Host
 	}
-	return fmt.Sprintf("%s:%d", ip, a.Port)
+	return fmt.Sprintf("%s:%d", h, a.Port)
 }
 
 func (a *Addr) Set(in string) error {
@@ -33,7 +36,7 @@ func (a *Addr) Set(in string) error {
 		if ip := net.ParseIP(c); ip != nil {
 			a.IP = ip
 		} else {
-			return fmt.Errorf("invalid address format: %s", in)
+			a.Host = c
 		}
 	}
 

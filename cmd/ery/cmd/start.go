@@ -3,13 +3,15 @@ package cmd
 import (
 	"context"
 
+	"github.com/docker/docker/client"
 	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/srvc/ery/pkg/ery/infra/local"
 	"github.com/srvc/ery/pkg/ery/infra/mem"
 	"github.com/srvc/ery/pkg/server/api"
 	"github.com/srvc/ery/pkg/server/dns"
 	"github.com/srvc/ery/pkg/server/proxy"
-	"golang.org/x/sync/errgroup"
 )
 
 func newStartCmd() *cobra.Command {
@@ -23,7 +25,11 @@ func newStartCmd() *cobra.Command {
 			}
 			portPool := local.NewPortPool()
 			appRepo := mem.NewAppRepository(ipPool, portPool)
-			proxies := proxy.NewManager()
+			dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+			if err != nil {
+				return err
+			}
+			proxies := proxy.NewManager(dockerClient)
 			dns := dns.NewServer(appRepo)
 			api := api.NewServer(appRepo, proxies)
 

@@ -7,10 +7,12 @@ import (
 	"net"
 	"sync"
 
-	"github.com/srvc/ery"
-	api_pb "github.com/srvc/ery/api"
+	"github.com/docker/docker/client"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/srvc/ery"
+	api_pb "github.com/srvc/ery/api"
 )
 
 type Manager interface {
@@ -20,14 +22,18 @@ type Manager interface {
 }
 
 type managerImpl struct {
-	addCh chan *appServer
-	m     sync.Map
-	log   *zap.Logger
+	docker *client.Client
+	addCh  chan *appServer
+	m      sync.Map
+	log    *zap.Logger
 }
 
-func NewManager() Manager {
+func NewManager(
+	docker *client.Client,
+) Manager {
 	return &managerImpl{
-		log: zap.L().Named("proxy").Named("manager"),
+		docker: docker,
+		log:    zap.L().Named("proxy").Named("manager"),
 	}
 }
 
@@ -66,21 +72,35 @@ func (m *managerImpl) Serve(ctx context.Context) error {
 func (m *managerImpl) AddProxy(ctx context.Context, app *api_pb.App) error {
 	appServer := &appServer{app: app}
 
-	for _, port := range app.GetPorts() {
-		switch port.GetNetwork() {
-		case api_pb.App_Port_TCP:
+	switch app.GetType() {
+	case api_pb.App_TYPE_LOCAL:
+		for _, port := range app.GetPorts() {
+			switch port.GetNetwork() {
+			case api_pb.App_Port_TCP:
+				appServer.servers = append(
+					appServer.servers,
+					NewTCPServer(
+						&ery.Addr{IP: net.ParseIP(app.GetIp()), Port: ery.Port(port.GetExposedPort())},
+						&ery.Addr{IP: net.ParseIP("127.0.0.1"), Port: ery.Port(port.GetInternalPort())},
+					),
+				)
+			case api_pb.App_Port_UDP:
+				return errors.New("not yet implemented")
+			default:
+				return fmt.Errorf("uknown network type: %s", port.GetNetwork())
+			}
+		}
+		if len(app.GetPorts()) > 0 {
 			appServer.servers = append(
 				appServer.servers,
-				NewTCPServer(
-					&ery.Addr{IP: net.ParseIP(app.GetIp()), Port: ery.Port(port.GetExposedPort())},
-					&ery.Addr{IP: net.ParseIP("127.0.0.1"), Port: ery.Port(port.GetInternalPort())},
-				),
+				NewDockerServer(m.docker, app),
 			)
-		case api_pb.App_Port_UDP:
-			return errors.New("not yet implemented")
-		default:
-			return fmt.Errorf("uknown network type: %s", port.GetNetwork())
 		}
+
+	case api_pb.App_TYPE_DOCKER, api_pb.App_TYPE_KUBERNETES:
+		return fmt.Errorf("not yet implemented type: %s", app.GetType())
+	default:
+		return fmt.Errorf("uknown application type: %s", app.GetType())
 	}
 
 	m.addCh <- appServer
