@@ -53,14 +53,19 @@ func (s *DockerServer) Serve(ctx context.Context) error {
 		},
 	}
 	hostCfg := &container.HostConfig{
-		NetworkMode: container.NetworkMode("srvc/ery"),
-		AutoRemove:  true,
+		NetworkMode:  container.NetworkMode("srvc/ery"),
+		PortBindings: nat.PortMap{},
+		AutoRemove:   true,
 	}
 	nwCfg := &network.NetworkingConfig{}
 
 	for _, p := range s.app.GetPorts() {
 		ePort := nat.Port(fmt.Sprintf("%d/%s", p.GetExposedPort(), strings.ToLower(p.GetNetwork().String())))
 		cfg.ExposedPorts[ePort] = struct{}{}
+		hostCfg.PortBindings[ePort] = append(hostCfg.PortBindings[ePort], nat.PortBinding{
+			HostIP:   s.app.GetIp(),
+			HostPort: fmt.Sprintf("%d/%s", p.GetExposedPort(), strings.ToLower(p.GetNetwork().String())),
+		})
 	}
 
 	resp, err := s.client.ContainerCreate(ctx, cfg, hostCfg, nwCfg, s.app.GetHostname())

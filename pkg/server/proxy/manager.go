@@ -4,14 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"sync"
 
 	"github.com/docker/docker/client"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/srvc/ery"
 	api_pb "github.com/srvc/ery/api"
 )
 
@@ -74,28 +72,10 @@ func (m *managerImpl) AddProxy(ctx context.Context, app *api_pb.App) error {
 
 	switch app.GetType() {
 	case api_pb.App_TYPE_LOCAL:
-		for _, port := range app.GetPorts() {
-			switch port.GetNetwork() {
-			case api_pb.App_Port_TCP:
-				appServer.servers = append(
-					appServer.servers,
-					NewTCPServer(
-						&ery.Addr{IP: net.ParseIP(app.GetIp()), Port: ery.Port(port.GetExposedPort())},
-						&ery.Addr{IP: net.ParseIP("127.0.0.1"), Port: ery.Port(port.GetInternalPort())},
-					),
-				)
-			case api_pb.App_Port_UDP:
-				return errors.New("not yet implemented")
-			default:
-				return fmt.Errorf("uknown network type: %s", port.GetNetwork())
-			}
-		}
-		if len(app.GetPorts()) > 0 {
-			appServer.servers = append(
-				appServer.servers,
-				NewDockerServer(m.docker, app),
-			)
-		}
+		appServer.servers = append(
+			appServer.servers,
+			NewDockerServer(m.docker, app),
+		)
 
 	case api_pb.App_TYPE_DOCKER, api_pb.App_TYPE_KUBERNETES:
 		return fmt.Errorf("not yet implemented type: %s", app.GetType())
