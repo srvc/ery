@@ -14,6 +14,7 @@ import (
 	_ "github.com/izumin5210/grapi/cmd/grapi-gen-scaffold-service"
 	_ "github.com/izumin5210/grapi/cmd/grapi-gen-service"
 	_ "github.com/izumin5210/grapi/cmd/grapi-gen-type"
+	_ "golang.org/x/tools/cmd/stringer"
 )
 
 // If you want to use tools, please run the following command:
@@ -27,3 +28,4 @@ import (
 //go:generate go build -v -o=./bin/grapi-gen-scaffold-service github.com/izumin5210/grapi/cmd/grapi-gen-scaffold-service
 //go:generate go build -v -o=./bin/grapi-gen-service github.com/izumin5210/grapi/cmd/grapi-gen-service
 //go:generate go build -v -o=./bin/grapi-gen-type github.com/izumin5210/grapi/cmd/grapi-gen-type
+//go:generate go build -v -o=./bin/stringer golang.org/x/tools/cmd/stringer

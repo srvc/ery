@@ -13,10 +13,12 @@ require (
 	github.com/miekg/dns v1.1.16
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/cobra v0.0.5
+	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.4.0
 	github.com/takama/daemon v0.11.0
 	go.uber.org/zap v1.10.0
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
+	golang.org/x/tools v0.0.0-20190823170909-c4a336ef6a2f
 	google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8
 	google.golang.org/grpc v1.23.0
 )
