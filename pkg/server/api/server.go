@@ -57,6 +57,7 @@ func (s *Server) Serve(ctx context.Context) error {
 	}
 	s.server = grapiserver.New(
 		grapiserver.WithDefaultLogger(),
+		grapiserver.WithSignalHandling(false),
 		grapiserver.WithAddr(defaultNetwork, fmt.Sprintf("%s:%d", app.GetIp(), defaultPort)),
 		grapiserver.WithServers(
 			internal.NewAppServiceServer(s.appRepo, s.proxies),

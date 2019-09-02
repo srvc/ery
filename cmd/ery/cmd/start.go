@@ -12,13 +12,14 @@ import (
 	"github.com/srvc/ery/pkg/server/api"
 	"github.com/srvc/ery/pkg/server/dns"
 	"github.com/srvc/ery/pkg/server/proxy"
+	cliutil "github.com/srvc/ery/pkg/util/cli"
 )
 
 func newStartCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "Start server",
-		RunE: func(c *cobra.Command, args []string) error {
+		RunE: cliutil.CobraRunE(func(ctx context.Context, c *cobra.Command, args []string) error {
 			ipPool, err := local.NewIPPool()
 			if err != nil {
 				return err
@@ -33,14 +34,13 @@ func newStartCmd() *cobra.Command {
 			dns := dns.NewServer(appRepo)
 			api := api.NewServer(appRepo, proxies)
 
-			eg, ctx := errgroup.WithContext(context.Background())
-
+			eg, ctx := errgroup.WithContext(ctx)
 			eg.Go(func() error { return proxies.Serve(ctx) })
 			eg.Go(func() error { return dns.Serve(ctx) })
 			eg.Go(func() error { return api.Serve(ctx) })
 
 			return eg.Wait()
-		},
+		}),
 	}
 
 	return cmd
