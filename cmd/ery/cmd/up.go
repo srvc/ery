@@ -82,6 +82,15 @@ func newUpCmd() *cobra.Command {
 					appPb = resp
 
 					log = log.With(zap.Any("app", appPb))
+					log.Debug("a new app is registered")
+
+					defer func() {
+						_, err = appAPI.DeleteApp(context.Background(), &api_pb.DeleteAppRequest{AppId: appPb.GetAppId()})
+						if err != nil {
+							log.Error("failed to delete app", zap.Error(err))
+						}
+						log.Debug("an app is deleted")
+					}()
 
 					switch {
 					case app.Local != nil:

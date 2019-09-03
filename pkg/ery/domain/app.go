@@ -10,4 +10,5 @@ type AppRepository interface {
 	List(context.Context) ([]*api_pb.App, error)
 	GetByHostname(context.Context, string) (*api_pb.App, error)
 	Create(context.Context, *api_pb.App) error
+	Delete(context.Context, string) error
 }

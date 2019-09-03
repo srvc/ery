@@ -12,10 +12,12 @@ import (
 )
 
 type AppRepository struct {
-	m        sync.Map
-	ipPool   domain.IPPool
-	portPool domain.PortPool
-	log      *zap.Logger
+	sync.Mutex
+	m          sync.Map
+	byHostname sync.Map
+	ipPool     domain.IPPool
+	portPool   domain.PortPool
+	log        *zap.Logger
 }
 
 var _ domain.AppRepository = (*AppRepository)(nil)
@@ -32,6 +34,9 @@ func NewAppRepository(
 }
 
 func (r *AppRepository) List(context.Context) ([]*api_pb.App, error) {
+	r.Lock()
+	defer r.Unlock()
+
 	apps := []*api_pb.App{}
 	r.m.Range(func(_, v interface{}) bool {
 		if app, ok := v.(*api_pb.App); ok {
@@ -43,16 +48,25 @@ func (r *AppRepository) List(context.Context) ([]*api_pb.App, error) {
 }
 
 func (r *AppRepository) GetByHostname(_ context.Context, hostname string) (*api_pb.App, error) {
-	v, ok := r.m.Load(hostname)
+	r.Lock()
+	defer r.Unlock()
+
+	v, ok := r.byHostname.Load(hostname)
 	if ok {
-		if app, ok := v.(*api_pb.App); ok {
-			return app, nil
+		v, ok := r.m.Load(v.(string))
+		if ok {
+			if app, ok := v.(*api_pb.App); ok {
+				return app, nil
+			}
 		}
 	}
 	return nil, fmt.Errorf("%s is not found", hostname)
 }
 
 func (r *AppRepository) Create(ctx context.Context, app *api_pb.App) error {
+	r.Lock()
+	defer r.Unlock()
+
 	if app.AppId == "" {
 		k := make([]byte, 16)
 		if _, err := rand.Read(k); err != nil {
@@ -76,9 +90,23 @@ func (r *AppRepository) Create(ctx context.Context, app *api_pb.App) error {
 			port.InternalPort = uint32(p)
 		}
 	}
-	r.m.Store(app.GetHostname(), app)
+	r.m.Store(app.GetAppId(), app)
+	r.byHostname.Store(app.GetHostname(), app.GetAppId())
 
 	r.log.Debug("registered a new app", zap.Any("app", app))
 
+	return nil
+}
+
+func (r *AppRepository) Delete(_ context.Context, id string) error {
+	r.Lock()
+	defer r.Unlock()
+
+	v, ok := r.m.Load(id)
+	if !ok {
+		return fmt.Errorf("%s is not found", id)
+	}
+	r.m.Delete(id)
+	r.byHostname.Delete(v.(*api_pb.App).GetHostname())
 	return nil
 }

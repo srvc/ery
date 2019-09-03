@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 
@@ -16,7 +15,7 @@ import (
 type Manager interface {
 	Serve(context.Context) error
 	AddProxy(context.Context, *api_pb.App) error
-	DeleteProxy(context.Context, *api_pb.App) error
+	DeleteProxy(ctx context.Context, appID string) error
 }
 
 type managerImpl struct {
@@ -56,8 +55,11 @@ func (m *managerImpl) Serve(ctx context.Context) error {
 			defer wg.Done()
 			defer m.m.Delete(s.GetID())
 
+			ctx, s.cancel = context.WithCancel(context.Background())
+
 			m.log.Debug("proxy servers will start", zap.String("app_id", s.GetID()))
 			err := s.Serve(ctx)
+			m.log.Debug("proxy servers will shutdown", zap.String("app_id", s.GetID()))
 			if err != nil {
 				m.log.Warn("shutdown proxy servers", zap.Error(err), zap.String("app_id", s.GetID()))
 			}
@@ -88,17 +90,12 @@ func (m *managerImpl) AddProxy(ctx context.Context, app *api_pb.App) error {
 	return nil
 }
 
-func (m *managerImpl) DeleteProxy(ctx context.Context, app *api_pb.App) error {
-	v, ok := m.m.Load(app.GetAppId())
+func (m *managerImpl) DeleteProxy(ctx context.Context, appID string) error {
+	v, ok := m.m.Load(appID)
 	if !ok {
-		return fmt.Errorf("app %s was not found", app.GetAppId())
+		return fmt.Errorf("app %s was not found", appID)
 	}
-	m.m.Delete(app.GetAppId())
-	s, ok := v.(*appServer)
-	if !ok {
-		return errors.New("unknown value was found")
-	}
-	s.Shutdown()
+	v.(*appServer).Shutdown()
 	return nil
 }
 

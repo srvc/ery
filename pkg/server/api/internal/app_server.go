@@ -56,7 +56,7 @@ func (s *appServiceServerImpl) CreateApp(ctx context.Context, req *api_pb.Create
 	}
 	err = s.proxies.AddProxy(ctx, app)
 	if err != nil {
-		// TODO: should delete app
+		s.appRepo.Delete(ctx, app.GetAppId())
 		return nil, err
 	}
 	return app, nil
@@ -68,6 +68,13 @@ func (s *appServiceServerImpl) UpdateApp(ctx context.Context, req *api_pb.Update
 }
 
 func (s *appServiceServerImpl) DeleteApp(ctx context.Context, req *api_pb.DeleteAppRequest) (*empty.Empty, error) {
-	// TODO: Not yet implemented.
-	return nil, status.Error(codes.Unimplemented, "TODO: You should implement it!")
+	err := s.appRepo.Delete(ctx, req.GetAppId())
+	if err != nil {
+		return nil, err
+	}
+	err = s.proxies.DeleteProxy(ctx, req.GetAppId())
+	if err != nil {
+		return nil, err
+	}
+	return new(empty.Empty), nil
 }
