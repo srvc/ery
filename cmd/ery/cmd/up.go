@@ -3,17 +3,17 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"sync"
 
-	"github.com/izumin5210/execx"
+	"github.com/izumin5210/clig/pkg/clib"
 	"github.com/spf13/cobra"
-	"github.com/srvc/ery"
-	api_pb "github.com/srvc/ery/api"
+	"github.com/srvc/ery/cmd/ery/cmd/up"
 	cliutil "github.com/srvc/ery/pkg/util/cli"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+
+	"github.com/srvc/ery"
+	api_pb "github.com/srvc/ery/api"
 )
 
 func newUpCmd() *cobra.Command {
@@ -44,78 +44,32 @@ func newUpCmd() *cobra.Command {
 				return fmt.Errorf("Project %q was not found", args[0])
 			}
 
+			io := &clib.IOContainer{
+				InR:  c.InOrStdin(),
+				OutW: c.OutOrStdout(),
+				ErrW: c.OutOrStderr(),
+			}
+
+			runner := up.New(
+				appAPI,
+				up.NewLocalRunnerFactory(
+					cfg.Root,
+					io,
+				),
+			)
+
 			var wg sync.WaitGroup
 			for _, app := range proj.Apps {
 				app := app
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					log := zap.L().With(zap.String("app_name", app.Name))
 
-					appPb := &api_pb.App{
-						Name:     app.Name,
-						Hostname: app.Hostname,
+					err := runner.Run(ctx, app)
+					if err != nil && err != context.Canceled && err != context.DeadlineExceeded {
+						zap.L().Error("unexpected exit app", zap.Any("app", app), zap.Error(err))
 					}
-					switch {
-					case app.Local != nil:
-						appPb.Type = api_pb.App_TYPE_LOCAL
-						for name, port := range app.Local.PortEnv {
-							appPb.Ports = append(appPb.Ports, &api_pb.App_Port{
-								Network:     api_pb.App_Port_TCP, // TODO
-								ExposedPort: uint32(port),
-								Env:         name,
-							})
-						}
-					case app.Docker != nil:
-						appPb.Type = api_pb.App_TYPE_DOCKER
-						// TODO: not yet supported
-					case app.Kubernetes != nil:
-						appPb.Type = api_pb.App_TYPE_KUBERNETES
-						// TODO: not yet supported
-					}
-
-					resp, err := appAPI.CreateApp(ctx, &api_pb.CreateAppRequest{App: appPb})
-					if err != nil {
-						log.Error("failed to register app", zap.Error(err))
-						return
-					}
-					appPb = resp
-
-					log = log.With(zap.Any("app", appPb))
-					log.Debug("a new app is registered")
-
-					defer func() {
-						_, err = appAPI.DeleteApp(context.Background(), &api_pb.DeleteAppRequest{AppId: appPb.GetAppId()})
-						if err != nil {
-							log.Error("failed to delete app", zap.Error(err))
-						}
-						log.Debug("an app is deleted")
-					}()
-
-					switch {
-					case app.Local != nil:
-						cmd := execx.CommandContext(ctx, app.Local.Cmd[0], app.Local.Cmd[1:]...)
-						cmd.Dir = filepath.Join(cfg.Root, app.Local.Path)
-						cmd.Env = os.Environ()
-						for _, port := range appPb.Ports {
-							if port.Env != "" {
-								cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%d", port.Env, port.InternalPort))
-							}
-						}
-						cmd.Stdin = c.InOrStdin()
-						cmd.Stdout = c.OutOrStdout()
-						cmd.Stderr = c.ErrOrStderr()
-						log.Info("start")
-						err = cmd.Run()
-						if err != nil {
-							log.Warn("shutdown", zap.Error(err))
-						}
-
-					case app.Docker != nil:
-						// TODO: not yet supported
-					case app.Kubernetes != nil:
-						// TODO: not yet supported
-					}
+					// TODO: auto restart?
 				}()
 			}
 

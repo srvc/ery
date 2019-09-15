@@ -8,6 +8,8 @@ import (
 
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
+
+	api_pb "github.com/srvc/ery/api"
 )
 
 type Config struct {
@@ -27,6 +29,33 @@ type App struct {
 	Local      *LocalApp
 	Docker     *DockerApp
 	Kubernetes *KubernetesApp
+}
+
+func (a *App) Pb() *api_pb.App {
+	pb := &api_pb.App{
+		Name:     a.Name,
+		Hostname: a.Hostname,
+	}
+
+	switch {
+	case a.Local != nil:
+		pb.Type = api_pb.App_TYPE_LOCAL
+		for name, port := range a.Local.PortEnv {
+			pb.Ports = append(pb.Ports, &api_pb.App_Port{
+				Network:     api_pb.App_Port_TCP, // TODO
+				ExposedPort: uint32(port),
+				Env:         name,
+			})
+		}
+	case a.Docker != nil:
+		pb.Type = api_pb.App_TYPE_DOCKER
+		// TODO: not yet supported
+	case a.Kubernetes != nil:
+		pb.Type = api_pb.App_TYPE_KUBERNETES
+		// TODO: not yet supported
+	}
+
+	return pb
 }
 
 type LocalApp struct {
