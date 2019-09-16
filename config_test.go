@@ -51,10 +51,18 @@ func TestNewConfig(t *testing.T) {
   name: admin
   hostname: admin.ery.local
   docker:
-    ports:
-    - 80
     path: example.com/admin
-    cmd: ["bin/rails", "s"]
+    build:
+      dockerfile: ./dev.dockerfile
+    run:
+      cmd: ["bin/rails", "s"]
+      volumes:
+      - .:/app
+      - bundle:/usr/local/bundle
+      - tmp:/app/tmp
+      - log:/app/log
+      port_envs:
+      - PORT: 80
 `
 
 	yaml4 := `

@@ -79,7 +79,10 @@ func (m *managerImpl) AddProxy(ctx context.Context, app *api_pb.App) error {
 			NewDockerServer(m.docker, app),
 		)
 
-	case api_pb.App_TYPE_DOCKER, api_pb.App_TYPE_KUBERNETES:
+	case api_pb.App_TYPE_DOCKER:
+		// no-op
+
+	case api_pb.App_TYPE_KUBERNETES:
 		return fmt.Errorf("not yet implemented type: %s", app.GetType())
 	default:
 		return fmt.Errorf("uknown application type: %s", app.GetType())

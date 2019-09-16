@@ -21,18 +21,20 @@ type Factory interface {
 func New(
 	appAPI api_pb.AppServiceClient,
 	local *LocalRunnerFactory,
+	docker *DockerRunnerFactory,
 ) *RunnerFacade {
 	return &RunnerFacade{
 		appAPI: appAPI,
 		local:  local,
+		docker: docker,
 		log:    zap.L(),
 	}
 }
 
 type RunnerFacade struct {
-	appAPI api_pb.AppServiceClient
-	local  Factory
-	log    *zap.Logger
+	appAPI        api_pb.AppServiceClient
+	local, docker Factory
+	log           *zap.Logger
 }
 
 func (r *RunnerFacade) Run(ctx context.Context, app *ery.App) error {
@@ -59,7 +61,7 @@ func (r *RunnerFacade) Run(ctx context.Context, app *ery.App) error {
 	case app.Local != nil:
 		return r.local.GetRunner(app, appPb).Run(ctx)
 	case app.Docker != nil:
-		return errors.New("not yet implemented")
+		return r.docker.GetRunner(app, appPb).Run(ctx)
 	case app.Kubernetes != nil:
 		return errors.New("not yet implemented")
 	default:

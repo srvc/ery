@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/docker/docker/client"
 	"github.com/izumin5210/clig/pkg/clib"
 	"github.com/spf13/cobra"
 	"github.com/srvc/ery/cmd/ery/cmd/up"
@@ -39,6 +40,11 @@ func newUpCmd() *cobra.Command {
 			}
 			appAPI := api_pb.NewAppServiceClient(conn)
 
+			dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+			if err != nil {
+				return err
+			}
+
 			proj := cfg.FindProject(args[0])
 			if proj == nil {
 				return fmt.Errorf("Project %q was not found", args[0])
@@ -55,6 +61,11 @@ func newUpCmd() *cobra.Command {
 				up.NewLocalRunnerFactory(
 					cfg.Root,
 					io,
+				),
+				up.NewDockerRunnerFactory(
+					cfg.Root,
+					io,
+					dockerClient,
 				),
 			)
 

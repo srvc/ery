@@ -49,7 +49,13 @@ func (a *App) Pb() *api_pb.App {
 		}
 	case a.Docker != nil:
 		pb.Type = api_pb.App_TYPE_DOCKER
-		// TODO: not yet supported
+		for name, port := range a.Docker.Run.PortEnv {
+			pb.Ports = append(pb.Ports, &api_pb.App_Port{
+				Network:     api_pb.App_Port_TCP, // TODO
+				ExposedPort: uint32(port),
+				Env:         name,
+			})
+		}
 	case a.Kubernetes != nil:
 		pb.Type = api_pb.App_TYPE_KUBERNETES
 		// TODO: not yet supported
@@ -65,9 +71,16 @@ type LocalApp struct {
 }
 
 type DockerApp struct {
-	Ports []Port
-	Cmd   []string
 	Path  string
+	Build struct {
+		Dockerfile string
+		Target     string
+	}
+	Run struct {
+		Cmd     [][]string
+		Volumes []string
+		PortEnv map[string]Port `mapstructure:"port_env"`
+	}
 }
 
 type KubernetesApp struct {

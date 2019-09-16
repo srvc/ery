@@ -6,6 +6,7 @@ require (
 	github.com/Microsoft/go-winio v0.4.14 // indirect
 	github.com/bradleyjkemp/cupaloy v2.3.0+incompatible // indirect
 	github.com/containerd/containerd v1.2.8 // indirect
+	github.com/docker/cli v0.0.0-20190906153656-016a3232168d
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v0.7.3-0.20190823211223-71d35adb3fad
 	github.com/docker/go-connections v0.4.0
@@ -16,6 +17,7 @@ require (
 	github.com/google/wire v0.3.0 // indirect
 	github.com/gorilla/mux v1.7.3 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.11.0
+	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/izumin5210/clig v0.2.0
 	github.com/izumin5210/execx v0.0.0-20190821013237-58c8ca513c37
 	github.com/izumin5210/grapi v0.4.2
@@ -23,6 +25,7 @@ require (
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mattn/go-isatty v0.0.9 // indirect
+	github.com/mattn/go-shellwords v1.0.6 // indirect
 	github.com/miekg/dns v1.1.16
 	github.com/morikuni/aec v0.0.0-20170113033406-39771216ff4c // indirect
 	github.com/onsi/ginkgo v1.10.1 // indirect
@@ -35,6 +38,9 @@ require (
 	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.4.0
 	github.com/takama/daemon v0.11.0
+	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
+	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
+	github.com/xeipuuv/gojsonschema v0.0.0-20170528113821-0c8571ac0ce1 // indirect
 	go.uber.org/zap v1.10.0
 	golang.org/x/crypto v0.0.0-20190829043050-9756ffdc2472 // indirect
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
